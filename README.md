@@ -62,3 +62,8 @@ La decisión de utilizar la combinación de C# y Python (Django), y no utilizar 
   Implementar paneles de gestión (control de usuarios, RRHH, reportes de stock) desde cero en C# o Java es muy demandante en tiempo. **Django** proporciona un panel de administración autogenerado (*out-of-the-box*) sumamente robusto. Al usarlo en el backend administrativo, aprovechamos el desarrollo rápido y flexible de Python para las tareas de moderación interna, sin arriesgar el core transaccional del sistema.
 
 
+# Miembros del Equipo
+
+- Josue Galo Balbontin Ugarteche
+
+- Dariana Pol Aramayo
