@@ -1,41 +1,65 @@
+using Backend.Infrestructura.Conexion;
+using DotNetEnv;
+using Microsoft.EntityFrameworkCore;
+
+Env.TraversePath().Load(".env.development");
+
 var builder = WebApplication.CreateBuilder(args);
+
+
+
+// PostgreSQL
+var pgUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
+var pgPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+var pgDb = Environment.GetEnvironmentVariable("POSTGRES_DB");
+var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
+var pgConnStr = $"Host=localhost;Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}";
+builder.Services.AddDbContext<PostgresContext>(options => options.UseNpgsql(pgConnStr));
+
+// MongoDB
+var mongoUser = Environment.GetEnvironmentVariable("MONGO_INITDB_ROOT_USERNAME");
+var mongoPass = Environment.GetEnvironmentVariable("MONGO_INITDB_ROOT_PASSWORD");
+var mongoPort = Environment.GetEnvironmentVariable("MONGO_PORT") ?? "27017";
+var mongoConnStr = $"mongodb://{mongoUser}:{mongoPass}@localhost:{mongoPort}";
+builder.Services.AddSingleton<MongoDbContext>(sp => new MongoDbContext(mongoConnStr, pgDb ?? "mydb"));
+
+// Redis
+var redisPass = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
+var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379";
+var redisConnStr = $"localhost:{redisPort},password={redisPass}";
+builder.Services.AddSingleton<RedisContext>(sp => new RedisContext(redisConnStr));
+
+// ClickHouse
+var clickUser = Environment.GetEnvironmentVariable("CLICKHOUSE_USER");
+var clickPass = Environment.GetEnvironmentVariable("CLICKHOUSE_PASSWORD");
+var clickDb = Environment.GetEnvironmentVariable("CLICKHOUSE_DB");
+var clickPort = Environment.GetEnvironmentVariable("CLICKHOUSE_PORT") ?? "8123";
+var clickConnStr = $"Host=localhost;Port={clickPort};Username={clickUser};Password={clickPass};Database={clickDb}";
+builder.Services.AddSingleton<ClickHouseContext>(sp => new ClickHouseContext(clickConnStr));
+
+// Elasticsearch (Seguridad desactivada localmente en compose, usamos http normal)
+var elasticPort = Environment.GetEnvironmentVariable("ELASTIC_PORT") ?? "9200";
+var elasticUrl = $"http://localhost:{elasticPort}";
+builder.Services.AddSingleton<ElasticsearchContext>(sp => new ElasticsearchContext(elasticUrl));
+
+// --- Fin de Configuración de Bases de Datos ---
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

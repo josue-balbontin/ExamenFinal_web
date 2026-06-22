@@ -8,7 +8,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="ClickHouse.Client" Version="7.14.0" />
+        <PackageReference Include="DotNetEnv" Version="3.2.0" />
+        <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.4.2" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.9">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.9" />
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
+        <PackageReference Include="MongoDB.Driver" Version="3.9.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     </ItemGroup>
 
@@ -19,7 +31,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controladores\" />
       <Folder Include="Core\" />
       <Folder Include="Infrestructura\" />
       <Folder Include="Servicios\" />

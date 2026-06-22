@@ -1,52 +1,92 @@
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Docker Compose reference guide at
-# https://docs.docker.com/go/compose-spec-reference/
-
-# Here the instructions define your application as a service called "app".
-# This service is built from the Dockerfile in the current directory.
-# You can add other services your application may depend on here, such as a
-# database or a cache. For examples, see the Awesome Compose repository:
-# https://github.com/docker/awesome-compose
 services:
-  app:
-    build:
-      context: .
-      target: final
-    # If your application exposes a port, uncomment the following lines and change
-    # the port numbers as needed. The first number is the host port and the second
-    # is the port inside the container.
-    # ports:
-    #   - 8080:8080
+  # Descomentar cuando se ejecute el backend tambien 
+  # app:
+  #   build:
+  #     context: ./Backend/Backend
+  #     target: final
+  #   ports:
+  #     - 8080:8080
+  #   env_file:
+  #     - .env.development
+  #   depends_on:
+  #     - postgresql
+  #     - mongodb
+  #     - redis
+  #     - clickhouse
+  #     - elasticsearch
 
-    # The commented out section below is an example of how to define a PostgreSQL
-    # database that your application can use. `depends_on` tells Docker Compose to
-    # start the database before your application. The `db-data` volume persists the
-    # database data between container restarts. The `db-password` secret is used
-    # to set the database password. You must create `db/password.txt` and add
-    # a password of your choosing to it before running `docker compose up`.
-    #     depends_on:
-    #       db:
-    #         condition: service_healthy
-    #   db:
-    #     image: postgres
-    #     restart: always
-    #     user: postgres
-    #     secrets:
-    #       - db-password
-    #     volumes:
-    #       - db-data:/var/lib/postgresql/data
-    #     environment:
-    #       - POSTGRES_DB=example
-    #       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-    #     expose:
-    #       - 5432
-    #     healthcheck:
-    #       test: [ "CMD", "pg_isready" ]
-    #       interval: 10s
-    #       timeout: 5s
-    #       retries: 5
-    # volumes:
-    #   db-data:
-    # secrets:
-    #   db-password:
-    #     file: db/password.txt
+  postgresql:
+    image: postgres:17
+    container_name: postgresql_db
+    restart: always
+    env_file:
+      - .env.development
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./Databases/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Databases/postgresql/volumen:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:6
+    container_name: mongodb_db
+    restart: always
+    env_file:
+      - .env.development
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - ./Databases/mongoDB/init.js:/docker-entrypoint-initdb.d/init.js
+      - ./Databases/mongoDB/volumen:/data/db
+
+  redis:
+    image: redis:7
+    container_name: redis_db
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    env_file:
+      - .env.development
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./Databases/redis/volumen:/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23
+    container_name: clickhouse_db
+    restart: always
+    env_file:
+      - .env.development
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    ports:
+      - "${CLICKHOUSE_PORT:-8123}:8123"
+      - "${CLICKHOUSE_HTTP_PORT:-8124}:8124"
+    volumes:
+      - ./Databases/ClickHouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Databases/ClickHouse/volumen:/var/lib/clickhouse
+
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    container_name: elasticsearch_db
+    restart: always
+    env_file:
+      - .env.development
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "${ELASTIC_PORT:-9200}:9200"
+    volumes:
+      - ./Databases/elasticsearch/volumen:/usr/share/elasticsearch/data
