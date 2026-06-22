@@ -1,0 +1,65 @@
+/* ===========================
+   AUTH-CARD — BEM block
+   =========================== */
+.auth-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  max-width: 420px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+}
+
+.auth-card__title {
+  color: var(--color-text);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.75rem;
+  text-align: center;
+}
+
+.auth-card__subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.auth-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-card__link {
+  color: var(--color-primary);
+  font-size: 0.85rem;
+}
+
+.auth-card__link--right {
+  display: block;
+  margin-top: -0.25rem;
+  text-align: right;
+}
+
+.auth-card__footer {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.auth-card__server-error {
+  background: var(--color-error-bg);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  font-size: 0.82rem;
+  min-height: 0;
+  padding: 0.5rem 0.75rem;
+  transition: opacity var(--transition);
+}
+
+.auth-card__server-error:empty {
+  display: none;
+}

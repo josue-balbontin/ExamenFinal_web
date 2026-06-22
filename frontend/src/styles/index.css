@@ -1,0 +1,8 @@
+/* Entry point — importa todos los estilos en orden */
+@import url('./base.css');
+@import url('./layout.css');
+@import url('./auth-card.css');
+@import url('./form-field.css');
+@import url('./btn.css');
+@import url('./dashboard-card.css');
+@import url('./responsive.css');

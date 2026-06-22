@@ -1,0 +1,68 @@
+/* ===========================
+   BTN — BEM block
+   =========================== */
+.btn {
+  align-items: center;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  transition:
+    background-color var(--transition),
+    opacity var(--transition);
+  width: 100%;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* Modifier: primary */
+.btn--primary {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.btn--primary:active:not(:disabled) {
+  background-color: var(--color-primary-active);
+}
+
+/* Modifier: ghost */
+.btn--ghost {
+  background-color: transparent;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background-color: rgb(59 130 246 / 6%);
+}
+
+/* Element: spinner */
+.btn__spinner {
+  animation: spin 0.6s linear infinite;
+  border: 2px solid rgb(255 255 255 / 40%);
+  border-radius: 50%;
+  border-top-color: #fff;
+  display: inline-block;
+  height: 1rem;
+  width: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
