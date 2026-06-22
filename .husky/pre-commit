@@ -1,2 +1,2 @@
 #!/bin/sh
-cd frontend && npx lint-staged
+cd code/frontend && npx lint-staged

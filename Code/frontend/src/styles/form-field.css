@@ -1,0 +1,107 @@
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.form-field__label {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.form-field__input-wrapper {
+  display: flex;
+  width: 100%;
+}
+
+.form-field__input-wrapper--password {
+  align-items: center;
+  border-bottom: 1.5px solid var(--color-border);
+  transition: border-color var(--transition);
+}
+
+.form-field__input-wrapper--password:focus-within {
+  border-bottom-color: var(--color-border-focus);
+}
+
+.form-field__input {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  outline: none;
+  padding: 0.45rem 0;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+
+.form-field__input-wrapper--password .form-field__input {
+  border-bottom: none;
+  flex: 1;
+}
+
+.form-field__error {
+  color: var(--color-error);
+  display: block;
+  font-size: 0.78rem;
+  min-height: 1em;
+}
+
+.form-field--error .form-field__input {
+  border-bottom-color: var(--color-error);
+}
+
+.form-field--error .form-field__input-wrapper--password {
+  border-bottom-color: var(--color-error);
+}
+
+.form-field--error .form-field__label {
+  color: var(--color-error);
+}
+
+.form-field__input:focus {
+  border-bottom-color: var(--color-border-focus);
+}
+
+.form-field__input-wrapper--password .form-field__input:focus {
+  border-bottom-color: transparent;
+}
+
+.form-field__input::placeholder {
+  color: var(--color-border);
+}
+
+.form-field__toggle-visibility {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  transition: color var(--transition);
+  width: 28px;
+}
+
+.form-field__toggle-visibility:hover {
+  color: var(--color-text);
+}
+
+.form-field__toggle-visibility:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.form-field__eye-icon {
+  height: 16px;
+  pointer-events: none;
+  width: 16px;
+}

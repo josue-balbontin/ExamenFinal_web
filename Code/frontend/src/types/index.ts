@@ -43,11 +43,41 @@ export interface RegisterValidationErrors {
   confirmPassword?: string;
 }
 
-export type Route = '/' | '/login' | '/register' | '/dashboard';
+export interface Product {
+  id: string;
+  name: string;
+  category: string;
+  seller: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviewCount: number;
+  imageUrl?: string;
+}
 
+export type Category =
+  | 'Todo'
+  | 'Electronicos'
+  | 'Fashion'
+  | 'Libros'
+  | 'Hogar'
+  | 'Deportes'
+  | 'Belleza';
+
+export type Route =
+  | '/'
+  | '/login'
+  | '/register'
+  | '/dashboard'
+  | '/home'
+  | '/product';
 export interface AppState {
   auth: AuthState;
   currentRoute: Route;
+  cart: Product[];
+  searchQuery: string;
+  selectedCategory: Category;
+  maxPrice: number;
 }
 
 export type Listener<T> = (state: T) => void;
