@@ -159,6 +159,14 @@ public class ProductoServicio : IProductoServicio
 
         double sumaEstrellas = 0;
 
+        var idsUsuarios = resenasBson
+            .Where(r => r.Contains("id_usuario_cliente"))
+            .Select(r => r["id_usuario_cliente"].AsInt32)
+            .Distinct()
+            .ToList();
+
+        var diccionarioUsuarios = await _repositorio.ObtenerNombresUsuarios(idsUsuarios);
+
         foreach (var r in resenasBson)
         {
             int calificacion = r.Contains("calificacion") ? r["calificacion"].AsInt32 : 0;
@@ -173,16 +181,26 @@ public class ProductoServicio : IProductoServicio
                 case 1: response.Distribucion.UnaEstrella++; break;
             }
 
+            string nombreUsuario = "Usuario Anónimo";
+            if (r.Contains("id_usuario_cliente"))
+            {
+                int idUsuario = r["id_usuario_cliente"].AsInt32;
+                if (diccionarioUsuarios.ContainsKey(idUsuario))
+                {
+                    nombreUsuario = diccionarioUsuarios[idUsuario];
+                }
+            }
+
             var comentarioDto = new ComentarioDto
             {
                 Calificacion = calificacion,
                 Comentario = r.Contains("comentario") ? r["comentario"].AsString : "",
-                NombreUsuario = r.Contains("nombre_usuario") ? r["nombre_usuario"].AsString : "Usuario Anónimo",
+                NombreUsuario = nombreUsuario,
             };
 
-            if (r.Contains("fecha"))
+            if (r.Contains("fecha_creacion"))
             {
-                var fechaBson = r["fecha"];
+                var fechaBson = r["fecha_creacion"];
                 if (fechaBson.IsBsonDateTime)
                 {
                     comentarioDto.Fecha = fechaBson.ToUniversalTime();

@@ -64,4 +64,14 @@ public class ProductoRepositorio : IProductoRepositorio
             .Include(p => p.PreciosGeolocalizados)
             .FirstOrDefaultAsync(p => p.IdProducto == id);
     }
+
+    public async Task<Dictionary<int, string>> ObtenerNombresUsuarios(List<int> idsUsuarios)
+    {
+        var usuarios = await _context.Usuarios
+            .Where(u => idsUsuarios.Contains(u.IdUsuario))
+            .Select(u => new { u.IdUsuario, NombreCompleto = $"{u.Nombre} {u.Apellido}".Trim() })
+            .ToListAsync();
+
+        return usuarios.ToDictionary(u => u.IdUsuario, u => u.NombreCompleto);
+    }
 }
