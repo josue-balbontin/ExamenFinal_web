@@ -1,4 +1,7 @@
 using Backend.Infrestructura.Conexion;
+using Backend.Middlewares;
+using Backend.Repositorio;
+using Backend.Servicios;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -58,6 +61,10 @@ builder.Services.AddSingleton<ElasticsearchContext>(sp => new ElasticsearchConte
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
+builder.Services.AddScoped<IProductoServicio, ProductoServicio>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -67,6 +74,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<IpRegionMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapControllers();

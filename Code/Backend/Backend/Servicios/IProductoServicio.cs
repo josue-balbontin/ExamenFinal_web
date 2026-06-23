@@ -1,0 +1,10 @@
+using Backend.Modelos.ResponseDto;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Backend.Servicios;
+
+public interface IProductoServicio
+{
+    Task<List<ProductoResponseDto>> BuscarProductosAsync(string? terminoBusqueda, List<int>? categorias, int pagina);
+}
