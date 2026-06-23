@@ -1,8 +1,19 @@
+# Node
+node_modules/
 
-.env.development
-node_modules
+# Dotnet / C#
+[Bb]in/
+[Oo]bj/
+.vs/
 
+# IDEs
+.idea/
+.vscode/
 
-Databases/**/volumen/
+# Env vars
+.env
 .env.development
 .env.production
+
+# Databases
+Databases/**/volumen/
