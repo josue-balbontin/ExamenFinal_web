@@ -5,6 +5,8 @@ using Backend.Modelos.Entidades;
 using Backend.Modelos.RequestDto;
 using Backend.Modelos.ResponseDto;
 using Backend.Infrestructura.Seguridad;
+using Backend.Servicios.Email;
+using StackExchange.Redis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,10 +18,14 @@ namespace Backend.Servicios.Auth;
 public class AuthServicio : IAuthServicio
 {
     private readonly MarketplaceDbContext _dbContext;
+    private readonly RedisContext _redisContext;
+    private readonly IEmailServicio _emailServicio;
 
-    public AuthServicio(MarketplaceDbContext dbContext)
+    public AuthServicio(MarketplaceDbContext dbContext, RedisContext redisContext, IEmailServicio emailServicio)
     {
         _dbContext = dbContext;
+        _redisContext = redisContext;
+        _emailServicio = emailServicio;
     }
 
     public async Task RegistrarUsuarioAsync(RegistroRequestDto request)
@@ -108,5 +114,57 @@ public class AuthServicio : IAuthServicio
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
         return tokenHandler.WriteToken(token);
+    }
+
+    public async Task SolicitarRecuperacionPasswordAsync(OlvidoPasswordRequestDto request)
+    {
+        var usuario = await _dbContext.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email);
+        
+        if (usuario != null)
+        {
+            // Generar un token aleatorio
+            string token = Guid.NewGuid().ToString("N");
+            
+            // Guardar en Redis: clave = reset_token:{token}, valor = email
+            var dbRedis = _redisContext.Database;
+            await dbRedis.StringSetAsync($"reset_token:{token}", request.Email, TimeSpan.FromMinutes(15));
+            
+            // Enviar correo
+            string asunto = "Recuperación de Contraseña - Marketplace UGC";
+            string cuerpoHtml = $@"
+                <h3>Hola {usuario.Nombre},</h3>
+                <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+                <p>Tu token temporal de recuperación es: <strong>{token}</strong></p>
+                <p>Este token expirará en 15 minutos.</p>
+                <p>Si no fuiste tú, puedes ignorar este correo de forma segura.</p>";
+            
+            await _emailServicio.EnviarEmailAsync(request.Email, asunto, cuerpoHtml);
+        }
+        // Por seguridad, si el usuario es null no hacemos nada ni lanzamos error.
+    }
+
+    public async Task ResetearPasswordAsync(ResetPasswordRequestDto request)
+    {
+        var dbRedis = _redisContext.Database;
+        string redisKey = $"reset_token:{request.Token}";
+        var email = await dbRedis.StringGetAsync(redisKey);
+
+        if (!email.HasValue)
+        {
+            throw new ArgumentException("El token es inválido o ha expirado.");
+        }
+
+        var usuario = await _dbContext.Usuarios.FirstOrDefaultAsync(u => u.Email == email.ToString());
+        if (usuario == null)
+        {
+            throw new ArgumentException("El token es inválido o ha expirado.");
+        }
+
+        // Hashear el nuevo password y guardar
+        usuario.PasswordHash = DjangoPasswordHasher.HashPassword(request.NuevoPassword);
+        await _dbContext.SaveChangesAsync();
+
+        // Invalidar el token
+        await dbRedis.KeyDeleteAsync(redisKey);
     }
 }

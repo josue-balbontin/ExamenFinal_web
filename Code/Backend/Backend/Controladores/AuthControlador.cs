@@ -65,4 +65,47 @@ public class AuthControlador : ControllerBase
             return StatusCode(500, new { mensaje = "Error interno del servidor" });
         }
     }
+
+    [HttpPost("olvido-password")]
+    public async Task<IActionResult> OlvidoPassword([FromBody] OlvidoPasswordRequestDto request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            return BadRequest(new { mensaje = "El correo es obligatorio" });
+
+        try
+        {
+            await _authServicio.SolicitarRecuperacionPasswordAsync(request);
+            // Siempre retornamos OK por seguridad, independientemente de si el correo existe
+            return Ok(new { mensaje = "Si el correo está registrado, recibirás un token de recuperación" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensaje = "Error interno del servidor: " + ex.Message });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NuevoPassword))
+            return BadRequest(new { mensaje = "El token y la nueva contraseña son obligatorios" });
+
+        if (request.NuevoPassword.Length < 6)
+            return BadRequest(new { mensaje = "La nueva contraseña debe tener al menos 6 caracteres" });
+
+        try
+        {
+            await _authServicio.ResetearPasswordAsync(request);
+            return Ok(new { mensaje = "Contraseña actualizada exitosamente" });
+        }
+        catch (ArgumentException ex)
+        {
+            // Token inválido o expirado
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensaje = "Error interno del servidor: " + ex.Message });
+        }
+    }
 }
