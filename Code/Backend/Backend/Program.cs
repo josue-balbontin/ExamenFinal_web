@@ -5,6 +5,7 @@ using Backend.Infrestructura.Repositorio;
 using Backend.Infrestructura.Data;
 using Backend.Servicios;
 using Backend.Servicios.Email;
+using Backend.Servicios.Notificacion;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -110,6 +111,7 @@ builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IProductoServicio, ProductoServicio>();
 builder.Services.AddScoped<Backend.Servicios.Auth.IAuthServicio, Backend.Servicios.Auth.AuthServicio>();
 builder.Services.AddScoped<IEmailServicio, EmailServicio>();
+builder.Services.AddScoped<INotificacionServicio, NotificacionServicio>();
 
 // Registrar DataSeeder
 builder.Services.AddTransient<DataSeeder>();

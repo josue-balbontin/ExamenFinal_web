@@ -14,6 +14,7 @@ db.createUser({
 
 
 db.createCollection('resenas_productos');
+db.createCollection('notificaciones');
 
 
 db.resenas_productos.insertMany([
@@ -48,6 +49,33 @@ db.resenas_productos.insertMany([
     "comentario": "El envío fue rapidísimo y el producto llegó impecable.",
     "fecha_creacion": new Date(new Date().setDate(new Date().getDate() - 5)), // Hace 5 días
     "util_votos": 8
+  }
+]);
+
+db.notificaciones.insertMany([
+  {
+    "id_usuario": 2,
+    "tipo": "APROBACION_VENDEDOR",
+    "titulo": "¡Felicidades! Cuenta de vendedor aprobada",
+    "mensaje": "Tu solicitud para ser vendedor ha sido aprobada por un administrador. Ya puedes empezar a publicar tus productos.",
+    "leida": false,
+    "fecha_creacion": new Date()
+  },
+  {
+    "id_usuario": 2,
+    "tipo": "SISTEMA",
+    "titulo": "Bienvenido al Marketplace",
+    "mensaje": "Gracias por registrarte en nuestra plataforma. Recuerda completar tu perfil.",
+    "leida": true,
+    "fecha_creacion": new Date(new Date().setDate(new Date().getDate() - 1)) // Ayer
+  },
+  {
+    "id_usuario": 5,
+    "tipo": "NUEVO_PEDIDO",
+    "titulo": "Has recibido un nuevo pedido",
+    "mensaje": "El usuario #8 ha comprado 2 unidades de tu producto 'Laptop Gamer'. Revisa el panel para más detalles.",
+    "leida": false,
+    "fecha_creacion": new Date()
   }
 ]);
 

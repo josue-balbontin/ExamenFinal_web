@@ -57,7 +57,21 @@ public class DataSeeder
         await client.Indices.CreateAsync("productos");
 
         // Volcar TODOS los productos desde postgres a elastic
-        var todosLosProductos = await _dbContext.Productos.ToListAsync();
+        var todosLosProductos = await _dbContext.Productos
+            .Select(p => new 
+            {
+                p.IdProducto,
+                p.IdVendedor,
+                p.IdCategoria,
+                p.Nombre,
+                p.Descripcion,
+                p.PrecioBase,
+                p.Stock,
+                p.UrlImagen,
+                p.FechaCreacion,
+                p.EstadoEliminado
+            })
+            .ToListAsync();
         
         if (todosLosProductos.Any())
         {
