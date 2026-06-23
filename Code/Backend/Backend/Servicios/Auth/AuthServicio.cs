@@ -167,4 +167,53 @@ public class AuthServicio : IAuthServicio
         // Invalidar el token
         await dbRedis.KeyDeleteAsync(redisKey);
     }
+
+    public async Task<UsuarioResponseDto> EditarPerfilAsync(int idUsuario, EditarPerfilRequestDto request)
+    {
+        var usuario = await _dbContext.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+        if (usuario == null || usuario.EstadoEliminado)
+        {
+            throw new ArgumentException("Usuario no encontrado.");
+        }
+
+        // Si cambia el correo, validar que no exista ya en otro usuario
+        if (usuario.Email != request.Email)
+        {
+            bool emailExiste = await _dbContext.Usuarios.AnyAsync(u => u.Email == request.Email && u.IdUsuario != idUsuario);
+            if (emailExiste)
+            {
+                throw new ArgumentException("El correo ya está en uso por otro usuario.");
+            }
+        }
+
+        usuario.Nombre = request.Nombre;
+        usuario.Apellido = request.Apellido;
+        usuario.Email = request.Email;
+        usuario.Telefono = request.Telefono;
+        usuario.DireccionPrincipal = request.Direccion;
+
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            if (request.Password.Length < 6)
+            {
+                throw new ArgumentException("La nueva contraseña debe tener al menos 6 caracteres.");
+            }
+            usuario.PasswordHash = Backend.Infrestructura.Seguridad.DjangoPasswordHasher.HashPassword(request.Password);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        return new UsuarioResponseDto
+        {
+            IdUsuario = usuario.IdUsuario,
+            IdRol = usuario.IdRol,
+            Nombre = usuario.Nombre,
+            Apellido = usuario.Apellido,
+            Email = usuario.Email,
+            Telefono = usuario.Telefono,
+            DireccionPrincipal = usuario.DireccionPrincipal,
+            FechaRegistro = usuario.FechaRegistro,
+            Token = string.Empty // No es necesario regenerar el token si no cambian los claims fundamentales o si el frontend no lo espera
+        };
+    }
 }

@@ -111,4 +111,36 @@ public class AuthControlador : ControllerBase
             return StatusCode(500, new { mensaje = "Error interno del servidor: " + ex.Message });
         }
     }
+
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpPut("perfil")]
+    public async Task<IActionResult> EditarPerfil([FromBody] EditarPerfilRequestDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                              ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+            {
+                return Unauthorized(new { mensaje = "Token inválido o usuario no autenticado" });
+            }
+
+            var response = await _authServicio.EditarPerfilAsync(idUsuario, request);
+            return Ok(new { mensaje = "Perfil actualizado exitosamente", usuario = response });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensaje = "Error interno del servidor: " + ex.Message });
+        }
+    }
 }
