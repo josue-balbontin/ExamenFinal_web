@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <table style="width:100%; text-align:left;">
+            <thead>
+                <tr>
+                    <th>ID Producto</th>
+                    <th>Calificación</th>
+                    <th>Comentario</th>
+                    <th>Fecha de Creación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in resenas %}
+                <tr>
+                    <td>{{ r.id_producto }}</td>
+                    <td>{{ r.calificacion }} / 5</td>
+                    <td>{{ r.comentario }}</td>
+                    <td>{{ r.fecha_creacion }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay reseñas disponibles o no se pudo conectar a MongoDB.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

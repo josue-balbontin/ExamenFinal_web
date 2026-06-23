@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <table style="width:100%; text-align:left;">
+            <thead>
+                <tr>
+                    <th>Fecha de Búsqueda</th>
+                    <th>Término Buscado</th>
+                    <th>Región Detectada</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in logs %}
+                <tr>
+                    <td>{{ l.0 }}</td>
+                    <td>{{ l.1 }}</td>
+                    <td>{{ l.2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No hay logs recientes o no se pudo conectar a ClickHouse.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
