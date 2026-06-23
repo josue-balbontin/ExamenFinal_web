@@ -1,4 +1,5 @@
 using Backend.Infrestructura.Conexion;
+using Microsoft.OpenApi;
 using Backend.Middlewares;
 using Backend.Infrestructura.Repositorio;
 using Backend.Infrestructura.Data;
@@ -62,7 +63,23 @@ builder.Services.AddSingleton<ElasticsearchContext>(sp => new ElasticsearchConte
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese su token JWT (Bearer {token})."
+    });
+
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
 builder.Services.AddControllers();
 
 // Configuración de JWT
