@@ -1,6 +1,7 @@
 using Backend.Infrestructura.Conexion;
 using Backend.Modelos.Entidades;
 using Backend.Modelos.ResponseDto;
+using Backend.Modelos.RequestDto;
 using Backend.Infrestructura.Repositorio;
 using Microsoft.AspNetCore.Http;
 using System;
