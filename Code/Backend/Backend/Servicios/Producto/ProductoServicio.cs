@@ -148,6 +148,7 @@ public class ProductoServicio : IProductoServicio
             UrlImagen = p.UrlImagen ?? "",
             Stock = p.Stock,
             PorcentajeDescuentoFlash = descuento,
+            IdCategoria = p.IdCategoria,
             Categoria = p.IdCategoriaNavigation?.Nombre ?? "",
             NombreVendedor = p.IdVendedorNavigation != null ? $"{p.IdVendedorNavigation.Nombre} {p.IdVendedorNavigation.Apellido}".Trim() : "",
             Estrellas = Math.Round(estrellas, 1)
