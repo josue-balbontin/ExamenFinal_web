@@ -8,7 +8,6 @@ export interface StarRatingProps {
 export class StarRatingComponent {
   private props: StarRatingProps;
   private root: HTMLElement;
-  private hovered = 0;
 
   constructor(props: StarRatingProps) {
     this.props = props;
@@ -52,7 +51,6 @@ export class StarRatingComponent {
   }
 
   private highlight(upTo: number): void {
-    this.hovered = upTo;
     this.root.querySelectorAll('.star-rating__star').forEach((s, idx) => {
       s.classList.toggle('star-rating__star--filled', idx < upTo);
     });

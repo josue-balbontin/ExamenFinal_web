@@ -19,12 +19,14 @@ export class Store<T extends object> {
     // Notify key-specific listeners
     (Object.keys(partial) as Array<keyof T>).forEach((key) => {
       if (prev[key] !== this.state[key]) {
-        this.listeners.get(key)?.forEach((fn) => fn(this.getState()));
+        const fns = Array.from(this.listeners.get(key) || []);
+        fns.forEach((fn) => fn(this.getState()));
       }
     });
 
     // Notify global listeners
-    this.listeners.get('__all__')?.forEach((fn) => fn(this.getState()));
+    const allFns = Array.from(this.listeners.get('__all__') || []);
+    allFns.forEach((fn) => fn(this.getState()));
   }
 
   subscribe(listener: Listener<T>): () => void;

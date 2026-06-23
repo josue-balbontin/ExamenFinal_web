@@ -3,6 +3,7 @@ import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
 import { NavbarComponent } from '../components/Navbar.js';
 import { StarRatingComponent } from '../components/StarRating.js';
+import { CartDrawerComponent } from '../components/CartDrawer.js';
 import {
   getMockProductDetail,
   getRatingDistribution,
@@ -110,7 +111,7 @@ export function createProductDetailPage(
 
   const addBtn = document.createElement('button');
   addBtn.className = 'detail-page__add-btn';
-  addBtn.innerHTML = `<span aria-hidden="true">+</span> ADD TO CART`;
+  addBtn.innerHTML = `<span aria-hidden="true">+</span> AÑADIR AL CARRITO`;
   addBtn.addEventListener('click', () => {
     const product: Product = {
       id: detail.id,
@@ -122,7 +123,17 @@ export function createProductDetailPage(
       rating: detail.rating,
       reviewCount: detail.reviewCount,
     };
-    store.setState({ cart: [...store.getState().cart, product] });
+    const cart = [...store.getState().cart];
+    const existing = cart.find((i) => i.product.id === product.id);
+    if (existing) {
+      existing.quantity += 1;
+      store.setState({ cart: [...cart], cartOpen: true });
+    } else {
+      store.setState({
+        cart: [...cart, { product, quantity: 1 }],
+        cartOpen: true,
+      });
+    }
   });
 
   infoPanel.appendChild(category);
@@ -306,6 +317,9 @@ export function createProductDetailPage(
   bottomSection.appendChild(writePanel);
   content.appendChild(bottomSection);
   page.appendChild(content);
+
+  const cartDrawer = new CartDrawerComponent(store);
+  page.appendChild(cartDrawer.getElement());
 
   return page;
 }

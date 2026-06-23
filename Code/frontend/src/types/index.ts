@@ -1,3 +1,5 @@
+import type { CartItem } from './cart.js';
+
 export interface User {
   email: string;
   name?: string;
@@ -70,11 +72,14 @@ export type Route =
   | '/register'
   | '/dashboard'
   | '/home'
-  | '/product';
+  | '/product'
+  | '/profile';
+
 export interface AppState {
   auth: AuthState;
   currentRoute: Route;
-  cart: Product[];
+  cart: CartItem[];
+  cartOpen: boolean;
   searchQuery: string;
   selectedCategory: Category;
   maxPrice: number;
