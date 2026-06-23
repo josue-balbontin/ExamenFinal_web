@@ -29,7 +29,7 @@ services:
       - ./Databases/postgresql/volumen:/var/lib/postgresql/data
 
   mongodb:
-    image: mongo:6
+    image: mongo:8
     container_name: mongodb_db
     restart: always
     env_file:
@@ -41,7 +41,7 @@ services:
       - ./Databases/mongoDB/volumen:/data/db
 
   redis:
-    image: redis:7
+    image: redis:8
     container_name: redis_db
     restart: always
     command: /bin/sh -c 'redis-server --requirepass "$$REDIS_PASSWORD"'
