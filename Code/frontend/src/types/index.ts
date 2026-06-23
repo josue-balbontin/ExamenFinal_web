@@ -57,14 +57,7 @@ export interface Product {
   imageUrl?: string;
 }
 
-export type Category =
-  | 'Todo'
-  | 'Electronicos'
-  | 'Fashion'
-  | 'Libros'
-  | 'Hogar'
-  | 'Deportes'
-  | 'Belleza';
+export type Category = string;
 
 export type Route =
   | '/'

@@ -11,7 +11,8 @@
     "lint:css": "stylelint \"src/**/*.css\"",
     "format": "prettier --write src",
     "validate": "npm run lint && npm run lint:css && npm run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate-api": "openapi-typescript http://localhost:5181/swagger/v1/swagger.json -o src/types/api.d.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
@@ -22,6 +23,7 @@
     "eslint-plugin-boundaries": "^4.2.1",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.38",
     "postcss-preset-env": "^9.5.14",
     "prettier": "^3.3.2",
@@ -41,5 +43,8 @@
       "stylelint --fix",
       "prettier --write --ignore-unknown"
     ]
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
   }
 }

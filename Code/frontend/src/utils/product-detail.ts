@@ -1,35 +1,47 @@
-import type { ProductDetail } from '../types/product-detail.js';
+import type { ProductDetail, Review } from '../types/product-detail.js';
+import { api } from './api.js';
 
-const MOCK_REVIEWS = [
-  {
-    id: 'r1',
-    userName: 'nombre usuario',
-    rating: 5,
-    date: 'fechaaa',
-    text: 'reviewwwwwwwwwwwwwwwww',
-  },
-  {
-    id: 'r2',
-    userName: 'nombre usuario',
-    rating: 4,
-    date: 'fechaaa',
-    text: 'reviewwwwwwwwwwwwwwwww',
-  },
-];
+export async function fetchProductDetail(id: string): Promise<ProductDetail> {
+  const numId = parseInt(id, 10);
 
-export function getMockProductDetail(id: string): ProductDetail {
+  // Llamadas concurrentes al API
+  const [productRes, reviewsRes] = await Promise.all([
+    api.GET('/Producto/{id}', { params: { path: { id: numId } } }),
+    api.GET('/Producto/{id}/reviews', { params: { path: { id: numId } } }),
+  ]);
+
+  if (productRes.error) {
+    throw new Error('No se pudo obtener el producto');
+  }
+
+  const p = productRes.data;
+  const reviewsData = reviewsRes.data?.comentarios || [];
+
+  const reviews: Review[] = reviewsData.map(
+    (r: Record<string, unknown>, index: number) => ({
+      id: r.idResena ? String(r.idResena) : index.toString(),
+      userName: (r.nombreUsuario as string) || 'Usuario Anónimo',
+      rating: (r.calificacion as number) || 0,
+      date: r.fecha ? new Date(r.fecha as string).toLocaleDateString() : '',
+      text: (r.comentario as string) || '',
+    })
+  );
+
+  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+
   return {
-    id,
-    name: 'nombre del producto',
-    category: 'CATEGORIA',
-    seller: 'nombre del vendedor',
-    price: 349.99,
-    originalPrice: 399.99,
-    rating: 4.5,
-    reviewCount: 2343,
-    stock: 12,
-    description: 'descripcionnnnnnnnnnnnnnn\nnnnnnnnnnnnnnnnnnnnn\nnnnnnnnnnnn',
-    reviews: MOCK_REVIEWS,
+    id: p.idProducto?.toString() || '',
+    name: p.nombre || '',
+    category: p.categoria || 'Sin categoría',
+    seller: p.nombreVendedor || 'Vendedor',
+    price: p.precioAplicado ?? p.precioBase ?? 0,
+    originalPrice: p.precioBase || 0,
+    rating: avgRating,
+    reviewCount: reviews.length,
+    stock: p.stock || 0,
+    description: p.descripcion || '',
+    reviews,
   };
 }
 

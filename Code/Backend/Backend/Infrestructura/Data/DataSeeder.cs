@@ -75,9 +75,22 @@ public class DataSeeder
         
         if (todosLosProductos.Any())
         {
+            var docProductos = todosLosProductos.Select(p => new {
+                p.IdProducto,
+                p.Nombre,
+                p.Descripcion,
+                p.PrecioBase,
+                p.Stock,
+                p.UrlImagen,
+                p.IdCategoria,
+                p.IdVendedor,
+                p.EstadoEliminado,
+                p.FechaCreacion
+            }).ToList();
+
             var bulkResponse = await client.BulkAsync(b => b
                 .Index("productos")
-                .IndexMany(todosLosProductos)
+                .IndexMany(docProductos)
             );
 
             if (!bulkResponse.IsValidResponse)
@@ -86,7 +99,7 @@ public class DataSeeder
             }
             else 
             {
-                Console.WriteLine($"Se indexaron {todosLosProductos.Count} productos en Elasticsearch con éxito.");
+                Console.WriteLine($"Se indexaron {docProductos.Count} productos en Elasticsearch con éxito.");
             }
         }
     }

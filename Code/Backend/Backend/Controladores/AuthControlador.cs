@@ -3,11 +3,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Backend.Modelos.RequestDto;
 using Backend.Servicios.Auth;
+using Backend.Modelos.ResponseDto;
+using Microsoft.AspNetCore.Http;
 
 namespace Backend.Controladores;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("Auth")]
 public class AuthControlador : ControllerBase
 {
     private readonly IAuthServicio _authServicio;
@@ -46,6 +48,7 @@ public class AuthControlador : ControllerBase
     }
 
     [HttpPost("login")]
+    [ProducesResponseType(typeof(UsuarioResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         if (request == null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))

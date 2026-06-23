@@ -58,7 +58,6 @@ export function createProfilePage(
   topRow.appendChild(avatarGroup);
   topRow.appendChild(editBtn);
 
-  // Meta row
   const metaRow = document.createElement('div');
   metaRow.className = 'profile-header__meta';
 

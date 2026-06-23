@@ -1,49 +1,69 @@
-import type { AppState } from '../types/index.js';
+import type { AppState, Product } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
 import type { Route } from '../types/index.js';
 import { ProductCardComponent } from './ProductCard.js';
-import { MOCK_PRODUCTS, filterProducts } from '../utils/products.js';
+import { fetchProducts } from '../utils/products.js';
 
 export class ProductGridComponent {
   private store: Store<AppState>;
   private router: Router;
   private root: HTMLElement;
   private unsubs: Array<() => void> = [];
+  private loading: boolean = false;
+  private currentProducts: Product[] = [];
 
   constructor(store: Store<AppState>, router: Router) {
     this.store = store;
     this.router = router;
-    this.root = this.buildGrid();
+    this.root = document.createElement('div');
+    this.root.className = 'product-grid__wrapper';
+
     this.bindStoreUpdates();
+    this.loadProducts();
   }
 
-  private buildGrid(): HTMLElement {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'product-grid__wrapper';
+  private async loadProducts(): Promise<void> {
+    this.loading = true;
+    this.render();
 
     const { searchQuery, selectedCategory, maxPrice } = this.store.getState();
-    const filtered = filterProducts(
-      MOCK_PRODUCTS,
+    this.currentProducts = await fetchProducts(
       searchQuery,
       selectedCategory,
       maxPrice
     );
 
-    if (filtered.length === 0) {
+    this.loading = false;
+    this.render();
+  }
+
+  private render(): void {
+    this.root.innerHTML = '';
+
+    if (this.loading) {
+      const loader = document.createElement('div');
+      loader.className = 'product-grid__empty'; // Usamos la misma clase para centrar
+      loader.setAttribute('role', 'status');
+      loader.innerHTML = '<p>Cargando productos...</p>';
+      this.root.appendChild(loader);
+      return;
+    }
+
+    if (this.currentProducts.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'product-grid__empty';
       empty.setAttribute('role', 'status');
       empty.innerHTML = `<p>No se encontraron productos.</p>`;
-      wrapper.appendChild(empty);
-      return wrapper;
+      this.root.appendChild(empty);
+      return;
     }
 
     const grid = document.createElement('div');
     grid.className = 'product-grid';
     grid.setAttribute('role', 'list');
 
-    filtered.forEach((product) => {
+    this.currentProducts.forEach((product) => {
       const card = new ProductCardComponent({
         product,
         onAddToCart: (item) => {
@@ -66,14 +86,7 @@ export class ProductGridComponent {
       grid.appendChild(li);
     });
 
-    wrapper.appendChild(grid);
-    return wrapper;
-  }
-
-  private rebuildGrid(): void {
-    const newGrid = this.buildGrid();
-    this.root.replaceWith(newGrid);
-    this.root = newGrid;
+    this.root.appendChild(grid);
   }
 
   private bindStoreUpdates(): void {
@@ -83,7 +96,7 @@ export class ProductGridComponent {
       'maxPrice',
     ];
     keys.forEach((key) => {
-      const unsub = this.store.subscribe(key, () => this.rebuildGrid());
+      const unsub = this.store.subscribe(key, () => this.loadProducts());
       this.unsubs.push(unsub);
     });
   }
