@@ -41,6 +41,8 @@ public class AuthServicio : IAuthServicio
             Apellido = request.Apellido,
             Email = request.Email,
             PasswordHash = hash,
+            Telefono = request.Telefono,
+            DireccionPrincipal = request.Direccion,
             IdRol = 2, // 2 = Comprador/Usuario Regular (según configuración usual)
             FechaRegistro = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
             EstadoEliminado = false
