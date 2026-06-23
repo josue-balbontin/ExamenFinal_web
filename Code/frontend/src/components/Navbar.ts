@@ -1,0 +1,100 @@
+import type { AppState } from '../types/index.js';
+import type { Store } from '../utils/store.js';
+import type { Router } from '../utils/router.js';
+
+export class NavbarComponent {
+  private store: Store<AppState>;
+  private router: Router;
+  private root: HTMLElement;
+  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(store: Store<AppState>, router: Router) {
+    this.store = store;
+    this.router = router;
+    this.root = this.render();
+  }
+
+  private render(): HTMLElement {
+    const nav = document.createElement('nav');
+    nav.className = 'navbar';
+
+    // Logo
+    const logo = document.createElement('a');
+    logo.className = 'navbar__logo';
+    logo.href = '#';
+    logo.setAttribute('aria-label', 'MarketPlace inicio');
+    logo.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.router.navigate('/home');
+    });
+    logo.innerHTML = `
+      <svg class="navbar__logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+      <span class="navbar__logo-text">MarketPlace</span>
+    `;
+
+    // Search
+    const searchWrapper = document.createElement('div');
+    searchWrapper.className = 'navbar__search';
+    const searchIcon = `<svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+    const searchInput = document.createElement('input');
+    searchInput.className = 'navbar__search-input';
+    searchInput.type = 'search';
+    searchInput.placeholder = 'Buscar en MarketPlace';
+    searchInput.setAttribute('aria-label', 'Buscar productos');
+    searchInput.value = this.store.getState().searchQuery;
+    searchInput.addEventListener('input', () => {
+      if (this.searchTimeout) clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        this.store.setState({ searchQuery: searchInput.value });
+      }, 350);
+    });
+    searchWrapper.innerHTML = searchIcon;
+    searchWrapper.appendChild(searchInput);
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'navbar__actions';
+
+    const cartBtn = document.createElement('button');
+    cartBtn.className = 'navbar__icon-btn';
+    cartBtn.setAttribute('aria-label', 'Ver carrito');
+    const cartCount = this.store.getState().cart.length;
+    cartBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      ${cartCount > 0 ? `<span class="navbar__badge" aria-label="${cartCount} items en carrito">${cartCount}</span>` : ''}
+    `;
+
+    const userBtn = document.createElement('button');
+    userBtn.className = 'navbar__icon-btn';
+    userBtn.setAttribute('aria-label', 'Cuenta de usuario');
+    userBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    userBtn.addEventListener('click', () => {
+      const state = this.store.getState();
+      if (state.auth.isAuthenticated) {
+        this.store.setState({
+          auth: { ...state.auth, isAuthenticated: false, user: null },
+        });
+        this.router.navigate('/login');
+      } else {
+        this.router.navigate('/login');
+      }
+    });
+
+    actions.appendChild(cartBtn);
+    actions.appendChild(userBtn);
+
+    nav.appendChild(logo);
+    nav.appendChild(searchWrapper);
+    nav.appendChild(actions);
+
+    return nav;
+  }
+
+  getElement(): HTMLElement {
+    return this.root;
+  }
+}

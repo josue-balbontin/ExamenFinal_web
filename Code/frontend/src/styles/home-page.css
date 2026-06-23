@@ -1,0 +1,84 @@
+.home-page {
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.home-page__layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.home-page__main {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+/* ===========================
+   PRODUCT-GRID — BEM block
+   =========================== */
+.product-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.product-grid__wrapper {
+  width: 100%;
+}
+
+.product-grid__empty {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 1rem;
+  justify-content: center;
+  min-height: 200px;
+}
+
+@media (width <= 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sidebar {
+    width: 160px;
+  }
+}
+
+@media (width <= 768px) {
+  .home-page__layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    border-bottom: 1px solid var(--color-border);
+    border-right: none;
+    width: 100%;
+  }
+
+  .sidebar__category-list {
+    flex-flow: row wrap;
+  }
+
+  .sidebar__category-item {
+    flex-shrink: 0;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .navbar {
+    padding: 0 1rem;
+  }
+}
+
+@media (width <= 480px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
