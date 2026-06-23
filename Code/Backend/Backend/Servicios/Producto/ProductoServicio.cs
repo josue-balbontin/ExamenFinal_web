@@ -46,7 +46,7 @@ public class ProductoServicio : IProductoServicio
         // Registrar búsqueda en ClickHouse
         if (!string.IsNullOrWhiteSpace(terminoBusqueda))
         {
-            _ = RegistrarBusquedaClickHouseAsync(terminoBusqueda, region);
+            await RegistrarBusquedaClickHouseAsync(terminoBusqueda, region);
         }
 
         // Redis: Generar clave de caché única
@@ -175,8 +175,9 @@ public class ProductoServicio : IProductoServicio
             cmd.CommandText = $"INSERT INTO busquedas_log (fecha, termino, region) VALUES (now(), '{termino.Replace("'", "''")}', '{region.Replace("'", "''")}')";
             await cmd.ExecuteNonQueryAsync();
         }
-        catch 
+        catch (Exception ex)
         {
+            Console.WriteLine("Error en ClickHouse: " + ex.Message);
             // Ignorar excepciones de métricas
         }
     }
