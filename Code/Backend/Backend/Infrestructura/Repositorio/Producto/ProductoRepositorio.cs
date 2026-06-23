@@ -80,4 +80,17 @@ public class ProductoRepositorio : IProductoRepositorio
 
         return usuarios.ToDictionary(u => u.IdUsuario, u => u.NombreCompleto);
     }
+
+    public async Task<List<Producto>> ObtenerProductosPorVendedorAsync(int idVendedor)
+    {
+        var fechaActual = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+        return await _context.Productos
+            .Include(p => p.IdCategoriaNavigation)
+            .Include(p => p.OfertasFlashes.Where(of => of.FechaInicio <= fechaActual && of.FechaFin >= fechaActual && !of.EstadoEliminado))
+            .Include(p => p.PreciosGeolocalizados)
+            .Where(p => p.IdVendedor == idVendedor && !p.EstadoEliminado)
+            .OrderByDescending(p => p.FechaCreacion)
+            .ToListAsync();
+    }
 }

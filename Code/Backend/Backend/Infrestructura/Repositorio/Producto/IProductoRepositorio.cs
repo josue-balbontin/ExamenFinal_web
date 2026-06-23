@@ -10,4 +10,5 @@ public interface IProductoRepositorio
     Task<List<Producto>> ObtenerPorIds(List<int> ids);
     Task<Producto?> ObtenerPorId(int id);
     Task<Dictionary<int, string>> ObtenerNombresUsuarios(List<int> idsUsuarios);
+    Task<List<Producto>> ObtenerProductosPorVendedorAsync(int idVendedor);
 }

@@ -10,4 +10,5 @@ public interface IProductoServicio
     Task<ProductoResponseDto?> ObtenerProductoPorIdAsync(int idProducto);
     Task<ResenasProductoResponseDto> ObtenerResenasDeProductoAsync(int idProducto);
     Task AgregarResenaAsync(int idProducto, int idUsuario, Backend.Modelos.RequestDto.CrearResenaRequestDto request);
+    Task<List<ProductoResponseDto>> ObtenerMisProductosAsync(int idVendedor);
 }

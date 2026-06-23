@@ -113,4 +113,29 @@ public class ProductoControlador : ControllerBase
             return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
         }
     }
+
+    [HttpGet("mis-productos")]
+    [Authorize]
+    [ProducesResponseType(typeof(IEnumerable<ProductoResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ObtenerMisProductos()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+            {
+                return Unauthorized(new { mensaje = "No se pudo identificar al usuario." });
+            }
+
+            var productos = await _servicio.ObtenerMisProductosAsync(idUsuario);
+
+            // Devolver 200 OK con arreglo vacío si no hay productos (el frontend maneja el mensaje)
+            return Ok(productos);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
+        }
+    }
 }

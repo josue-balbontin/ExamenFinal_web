@@ -270,6 +270,38 @@ public class ProductoServicio : IProductoServicio
         await collection.InsertOneAsync(nuevaResena);
     }
 
+    public async Task<List<ProductoResponseDto>> ObtenerMisProductosAsync(int idVendedor)
+    {
+        string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
+        var productosRaw = await _repositorio.ObtenerProductosPorVendedorAsync(idVendedor);
+
+        if (!productosRaw.Any())
+            return new List<ProductoResponseDto>();
+
+        // Obtener calificaciones de Mongo para estos productos (opcional para listado propio, pero mantiene el DTO consistente)
+        var idsProductos = productosRaw.Select(p => p.IdProducto).ToList();
+        var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+        var filter = Builders<BsonDocument>.Filter.In("id_producto", idsProductos);
+        var resenas = await collection.Find(filter).ToListAsync();
+
+        var promedios = resenas
+            .GroupBy(r => r["id_producto"].AsInt32)
+            .ToDictionary(g => g.Key, g => g.Average(r => r["calificacion"].AsInt32));
+
+        var conteos = resenas
+            .GroupBy(r => r["id_producto"].AsInt32)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var resultado = productosRaw.Select(p => 
+        {
+            double avg = promedios.ContainsKey(p.IdProducto) ? promedios[p.IdProducto] : 0.0;
+            int count = conteos.ContainsKey(p.IdProducto) ? conteos[p.IdProducto] : 0;
+            return MapearA_Dto(p, region, avg, count);
+        }).ToList();
+
+        return resultado;
+    }
+
     private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas, int cantidadReviews)
     {
         double precioAplicado = p.PrecioBase;
