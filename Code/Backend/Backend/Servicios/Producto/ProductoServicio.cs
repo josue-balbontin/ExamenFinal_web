@@ -143,6 +143,67 @@ public class ProductoServicio : IProductoServicio
         return dto;
     }
 
+    public async Task<ResenasProductoResponseDto> ObtenerResenasDeProductoAsync(int idProducto)
+    {
+        var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+        var filter = Builders<BsonDocument>.Filter.Eq("id_producto", idProducto);
+        var resenasBson = await collection.Find(filter).ToListAsync();
+
+        var response = new ResenasProductoResponseDto();
+        response.TotalReviews = resenasBson.Count;
+
+        if (response.TotalReviews == 0)
+        {
+            return response;
+        }
+
+        double sumaEstrellas = 0;
+
+        foreach (var r in resenasBson)
+        {
+            int calificacion = r.Contains("calificacion") ? r["calificacion"].AsInt32 : 0;
+            sumaEstrellas += calificacion;
+
+            switch (calificacion)
+            {
+                case 5: response.Distribucion.CincoEstrellas++; break;
+                case 4: response.Distribucion.CuatroEstrellas++; break;
+                case 3: response.Distribucion.TresEstrellas++; break;
+                case 2: response.Distribucion.DosEstrellas++; break;
+                case 1: response.Distribucion.UnaEstrella++; break;
+            }
+
+            var comentarioDto = new ComentarioDto
+            {
+                Calificacion = calificacion,
+                Comentario = r.Contains("comentario") ? r["comentario"].AsString : "",
+                NombreUsuario = r.Contains("nombre_usuario") ? r["nombre_usuario"].AsString : "Usuario Anónimo",
+            };
+
+            if (r.Contains("fecha"))
+            {
+                var fechaBson = r["fecha"];
+                if (fechaBson.IsBsonDateTime)
+                {
+                    comentarioDto.Fecha = fechaBson.ToUniversalTime();
+                }
+                else if (fechaBson.IsString && DateTime.TryParse(fechaBson.AsString, out var dt))
+                {
+                    comentarioDto.Fecha = dt;
+                }
+            }
+
+            response.Comentarios.Add(comentarioDto);
+        }
+
+        response.PromedioEstrellas = Math.Round(sumaEstrellas / response.TotalReviews, 1);
+        
+        // Ordenar por fecha más reciente
+        response.Comentarios = response.Comentarios.OrderByDescending(c => c.Fecha).ToList();
+
+        return response;
+    }
+
     private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas)
     {
         double precioAplicado = p.PrecioBase;

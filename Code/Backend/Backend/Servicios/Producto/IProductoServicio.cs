@@ -8,4 +8,5 @@ public interface IProductoServicio
 {
     Task<List<ProductoResponseDto>> BuscarProductosAsync(string? terminoBusqueda, List<int>? categorias, int pagina);
     Task<ProductoResponseDto?> ObtenerProductoPorIdAsync(int idProducto);
+    Task<ResenasProductoResponseDto> ObtenerResenasDeProductoAsync(int idProducto);
 }

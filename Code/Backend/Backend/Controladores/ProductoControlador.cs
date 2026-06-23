@@ -61,4 +61,18 @@ public class ProductoControlador : ControllerBase
             return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
         }
     }
+
+    [HttpGet("{id}/reviews")]
+    public async Task<IActionResult> ObtenerResenasDeProducto(int id)
+    {
+        try
+        {
+            var resenas = await _servicio.ObtenerResenasDeProductoAsync(id);
+            return Ok(resenas);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
+        }
+    }
 }
