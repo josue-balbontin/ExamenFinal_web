@@ -14,4 +14,5 @@ public class ProductoResponseDto
     public string Categoria { get; set; } = string.Empty;
     public string NombreVendedor { get; set; } = string.Empty;
     public double Estrellas { get; set; }
+    public int CantidadReviews { get; set; }
 }

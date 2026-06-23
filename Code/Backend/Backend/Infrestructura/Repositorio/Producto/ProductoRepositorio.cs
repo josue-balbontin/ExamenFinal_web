@@ -52,4 +52,16 @@ public class ProductoRepositorio : IProductoRepositorio
             .Where(p => ids.Contains(p.IdProducto))
             .ToListAsync();
     }
+
+    public async Task<Producto?> ObtenerPorId(int id)
+    {
+        var fechaActual = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+        return await _context.Productos
+            .Include(p => p.IdCategoriaNavigation)
+            .Include(p => p.IdVendedorNavigation)
+            .Include(p => p.OfertasFlashes.Where(of => of.FechaInicio <= fechaActual && of.FechaFin >= fechaActual && !of.EstadoEliminado))
+            .Include(p => p.PreciosGeolocalizados)
+            .FirstOrDefaultAsync(p => p.IdProducto == id);
+    }
 }

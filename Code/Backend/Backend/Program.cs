@@ -6,6 +6,9 @@ using Backend.Servicios;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 Env.TraversePath().Load(".env.development");
 
@@ -62,9 +65,32 @@ builder.Services.AddSingleton<ElasticsearchContext>(sp => new ElasticsearchConte
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+// Configuración de JWT
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "super-secret-key-that-should-be-at-least-32-bytes-long-for-hmac-sha256";
+var key = Encoding.UTF8.GetBytes(jwtSecret);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IProductoServicio, ProductoServicio>();
+builder.Services.AddScoped<Backend.Servicios.Auth.IAuthServicio, Backend.Servicios.Auth.AuthServicio>();
 
 // Registrar DataSeeder
 builder.Services.AddTransient<DataSeeder>();
@@ -80,6 +106,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<IpRegionMiddleware>();
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -117,6 +117,32 @@ public class ProductoServicio : IProductoServicio
         return resultado;
     }
 
+    public async Task<ProductoResponseDto?> ObtenerProductoPorIdAsync(int idProducto)
+    {
+        string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
+
+        var productoRaw = await _repositorio.ObtenerPorId(idProducto);
+        if (productoRaw == null) return null;
+
+        // Obtener calificaciones de Mongo
+        var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+        var filter = Builders<BsonDocument>.Filter.Eq("id_producto", idProducto);
+        var resenas = await collection.Find(filter).ToListAsync();
+
+        double estrellas = 0;
+        int cantidadReviews = resenas.Count;
+        
+        if (cantidadReviews > 0)
+        {
+            estrellas = resenas.Average(r => r["calificacion"].AsInt32);
+        }
+
+        var dto = MapearA_Dto(productoRaw, region, estrellas);
+        dto.CantidadReviews = cantidadReviews;
+
+        return dto;
+    }
+
     private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas)
     {
         double precioAplicado = p.PrecioBase;
@@ -151,7 +177,8 @@ public class ProductoServicio : IProductoServicio
             IdCategoria = p.IdCategoria,
             Categoria = p.IdCategoriaNavigation?.Nombre ?? "",
             NombreVendedor = p.IdVendedorNavigation != null ? $"{p.IdVendedorNavigation.Nombre} {p.IdVendedorNavigation.Apellido}".Trim() : "",
-            Estrellas = Math.Round(estrellas, 1)
+            Estrellas = Math.Round(estrellas, 1),
+            CantidadReviews = 0 // Se sobreescribe si se obtienen de Mongo
         };
     }
 

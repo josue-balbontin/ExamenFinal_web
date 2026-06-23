@@ -41,4 +41,24 @@ public class ProductoControlador : ControllerBase
             return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
         }
     }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> ObtenerProductoPorId(int id)
+    {
+        try
+        {
+            var producto = await _servicio.ObtenerProductoPorIdAsync(id);
+
+            if (producto == null)
+            {
+                return NotFound(new { mensaje = "Producto no encontrado." });
+            }
+
+            return Ok(producto);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
+        }
+    }
 }
