@@ -1,99 +1,57 @@
 import type { Product, Category } from '../types/index.js';
-
-export const MOCK_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'nombre producto',
-    category: 'Electronicos',
-    seller: 'nombrevendedor',
-    price: 349.99,
-    originalPrice: 399.99,
-    rating: 4.8,
-    reviewCount: 2341,
-  },
-  {
-    id: '2',
-    name: 'nombre producto',
-    category: 'Fashion',
-    seller: 'nombrevendedor',
-    price: 349.99,
-    originalPrice: 399.99,
-    rating: 4.8,
-    reviewCount: 2341,
-  },
-  {
-    id: '3',
-    name: 'nombre producto',
-    category: 'Libros',
-    seller: 'nombrevendedor',
-    price: 349.99,
-    originalPrice: 399.99,
-    rating: 4.8,
-    reviewCount: 2341,
-  },
-  {
-    id: '4',
-    name: 'nombre producto',
-    category: 'Hogar',
-    seller: 'nombrevendedor',
-    price: 199.99,
-    originalPrice: 249.99,
-    rating: 4.5,
-    reviewCount: 1200,
-  },
-  {
-    id: '5',
-    name: 'nombre producto',
-    category: 'Deportes',
-    seller: 'nombrevendedor',
-    price: 89.99,
-    originalPrice: 120.0,
-    rating: 4.2,
-    reviewCount: 875,
-  },
-  {
-    id: '6',
-    name: 'nombre producto',
-    category: 'Belleza',
-    seller: 'nombrevendedor',
-    price: 59.99,
-    originalPrice: 79.99,
-    rating: 4.6,
-    reviewCount: 3100,
-  },
-  {
-    id: '7',
-    name: 'nombre producto',
-    category: 'Electronicos',
-    seller: 'nombrevendedor',
-    price: 799.99,
-    originalPrice: 999.99,
-    rating: 4.9,
-    reviewCount: 512,
-  },
-  {
-    id: '8',
-    name: 'nombre producto',
-    category: 'Fashion',
-    seller: 'nombrevendedor',
-    price: 45.0,
-    originalPrice: 65.0,
-    rating: 4.3,
-    reviewCount: 670,
-  },
-  {
-    id: '9',
-    name: 'nombre producto',
-    category: 'Hogar',
-    seller: 'nombrevendedor',
-    price: 129.99,
-    originalPrice: 159.99,
-    rating: 4.7,
-    reviewCount: 990,
-  },
-];
+import { api } from './api.js';
 
 export const MAX_PRICE_DEFAULT = 1200;
+
+export async function fetchProducts(
+  query: string = '',
+  category: string = 'Todo',
+  maxPrice: number = MAX_PRICE_DEFAULT,
+  pagina: number = 1
+): Promise<Product[]> {
+  try {
+    const { data: backendProducts, error } = await api.GET('/Producto', {
+      params: {
+        query: {
+          terminoBusqueda: query || undefined,
+          pagina,
+        },
+      },
+    });
+
+    if (error || !backendProducts) {
+      return [];
+    }
+
+    // Backend devuelve IEnumerable<ProductoResponseDto>, mapeamos a nuestro tipo Product
+    const products: Product[] = (
+      backendProducts as Record<string, unknown>[]
+    ).map((p: Record<string, unknown>) => ({
+      id: p.idProducto ? String(p.idProducto) : '',
+      name: (p.nombre as string) || '',
+      category:
+        (p.nombreCategoria as string) || (p.categoria as string) || 'Todo',
+      seller: (p.nombreVendedor as string) || 'Vendedor',
+      price: (p.precioBase as number) || 0,
+      originalPrice: (p.precioBase as number) || 0,
+      rating: (p.estrellas as number) || 0,
+      reviewCount: (p.cantidadReviews as number) || 0,
+      imageUrl: (p.urlImagen as string) || undefined,
+    }));
+
+    // Filtramos localmente por categoría (ya que no estamos mandando List<int> al backend aún) y precio
+    return products.filter((p) => {
+      const matchesCategory =
+        category === 'Todo' ||
+        p.category.toLowerCase() === category.toLowerCase();
+      const matchesPrice = p.price <= maxPrice;
+      return matchesCategory && matchesPrice;
+    });
+  } catch (error) {
+    console.error('Error fetching products from backend:', error);
+    return [];
+  }
+}
 
 export function filterProducts(
   products: Product[],

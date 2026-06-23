@@ -88,7 +88,13 @@ public class ProductoServicio : IProductoServicio
             }
             catch 
             {
-                // Fallback silencioso si Elastic no tiene el índice aún
+                // Fallback silencioso si Elastic no tiene el índice aún o falla la conexión
+            }
+
+            // Si Elasticsearch falló o no devolvió resultados, buscamos en PostgreSQL directamente
+            if (productosRaw.Count == 0)
+            {
+                productosRaw = await _repositorio.ObtenerTodosPaginados(pagina, cantidadPorPagina, categorias, terminoBusqueda);
             }
         }
         else
@@ -98,9 +104,14 @@ public class ProductoServicio : IProductoServicio
 
         // Obtener calificaciones de Mongo
         var idsProductos = productosRaw.Select(p => p.IdProducto).ToList();
-        var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
-        var filter = Builders<BsonDocument>.Filter.In("id_producto", idsProductos);
-        var resenas = await collection.Find(filter).ToListAsync();
+        List<BsonDocument> resenas = new List<BsonDocument>();
+        
+        if (idsProductos.Any())
+        {
+            var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+            var filter = Builders<BsonDocument>.Filter.In("id_producto", idsProductos);
+            resenas = await collection.Find(filter).ToListAsync();
+        }
 
         var promedios = resenas
             .GroupBy(r => r["id_producto"].AsInt32)
@@ -109,8 +120,20 @@ public class ProductoServicio : IProductoServicio
                 g => g.Average(r => r["calificacion"].AsInt32)
             );
 
+        var conteos = resenas
+            .GroupBy(r => r["id_producto"].AsInt32)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Count()
+            );
+
         // Mapeo y cálculo de precios por región
-        var resultado = productosRaw.Select(p => MapearA_Dto(p, region, promedios.ContainsKey(p.IdProducto) ? promedios[p.IdProducto] : 0.0)).ToList();
+        var resultado = productosRaw.Select(p => 
+        {
+            double avg = promedios.ContainsKey(p.IdProducto) ? promedios[p.IdProducto] : 0.0;
+            int count = conteos.ContainsKey(p.IdProducto) ? conteos[p.IdProducto] : 0;
+            return MapearA_Dto(p, region, avg, count);
+        }).ToList();
 
         // Guardar resultado en Redis por 10 minutos
         await dbRedis.StringSetAsync(cacheKey, JsonSerializer.Serialize(resultado), TimeSpan.FromMinutes(10));
@@ -138,8 +161,7 @@ public class ProductoServicio : IProductoServicio
             estrellas = resenas.Average(r => r["calificacion"].AsInt32);
         }
 
-        var dto = MapearA_Dto(productoRaw, region, estrellas);
-        dto.CantidadReviews = cantidadReviews;
+        var dto = MapearA_Dto(productoRaw, region, estrellas, cantidadReviews);
 
         return dto;
     }
@@ -248,7 +270,7 @@ public class ProductoServicio : IProductoServicio
         await collection.InsertOneAsync(nuevaResena);
     }
 
-    private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas)
+    private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas, int cantidadReviews)
     {
         double precioAplicado = p.PrecioBase;
         
@@ -283,7 +305,7 @@ public class ProductoServicio : IProductoServicio
             Categoria = p.IdCategoriaNavigation?.Nombre ?? "",
             NombreVendedor = p.IdVendedorNavigation != null ? $"{p.IdVendedorNavigation.Nombre} {p.IdVendedorNavigation.Apellido}".Trim() : "",
             Estrellas = Math.Round(estrellas, 1),
-            CantidadReviews = 0 // Se sobreescribe si se obtienen de Mongo
+            CantidadReviews = cantidadReviews
         };
     }
 

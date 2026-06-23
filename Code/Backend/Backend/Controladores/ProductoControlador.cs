@@ -1,5 +1,7 @@
 using Backend.Servicios;
 using Backend.Modelos.RequestDto;
+using Backend.Modelos.ResponseDto;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -10,7 +12,7 @@ using System.Threading.Tasks;
 namespace Backend.Controladores;
 
 [ApiController]
-[Route("[controller]")]
+[Route("Producto")]
 public class ProductoControlador : ControllerBase
 {
     private readonly IProductoServicio _servicio;
@@ -21,6 +23,7 @@ public class ProductoControlador : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ProductoResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObtenerProductos(
         [FromQuery] string? terminoBusqueda, 
         [FromQuery] List<int>? categorias, 
@@ -46,6 +49,7 @@ public class ProductoControlador : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ProductoResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObtenerProductoPorId(int id)
     {
         try
@@ -66,6 +70,7 @@ public class ProductoControlador : ControllerBase
     }
 
     [HttpGet("{id}/reviews")]
+    [ProducesResponseType(typeof(ResenasProductoResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObtenerResenasDeProducto(int id)
     {
         try

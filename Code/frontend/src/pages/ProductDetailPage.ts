@@ -5,21 +5,21 @@ import { NavbarComponent } from '../components/Navbar.js';
 import { StarRatingComponent } from '../components/StarRating.js';
 import { CartDrawerComponent } from '../components/CartDrawer.js';
 import {
-  getMockProductDetail,
+  fetchProductDetail,
   getRatingDistribution,
 } from '../utils/product-detail.js';
 
-export function createProductDetailPage(
+export async function createProductDetailPage(
   store: Store<AppState>,
   router: Router,
   productId: string
-): HTMLElement {
+): Promise<HTMLElement> {
   if (!store.getState().auth.isAuthenticated) {
     router.navigate('/login');
     return document.createElement('div');
   }
 
-  const detail = getMockProductDetail(productId);
+  const detail = await fetchProductDetail(productId);
   const dist = getRatingDistribution(detail.reviews);
   const maxDist = Math.max(...Object.values(dist), 1);
 

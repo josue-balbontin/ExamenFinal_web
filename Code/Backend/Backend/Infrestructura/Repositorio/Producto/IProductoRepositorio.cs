@@ -6,7 +6,7 @@ namespace Backend.Infrestructura.Repositorio;
 
 public interface IProductoRepositorio
 {
-    Task<List<Producto>> ObtenerTodosPaginados(int pagina, int cantidadPorPagina, List<int>? categorias = null);
+    Task<List<Producto>> ObtenerTodosPaginados(int pagina, int cantidadPorPagina, List<int>? categorias = null, string? terminoBusqueda = null);
     Task<List<Producto>> ObtenerPorIds(List<int> ids);
     Task<Producto?> ObtenerPorId(int id);
     Task<Dictionary<int, string>> ObtenerNombresUsuarios(List<int> idsUsuarios);

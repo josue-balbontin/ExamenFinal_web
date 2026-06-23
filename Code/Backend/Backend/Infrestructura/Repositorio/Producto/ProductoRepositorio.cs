@@ -17,7 +17,7 @@ public class ProductoRepositorio : IProductoRepositorio
         _context = context;
     }
 
-    public async Task<List<Producto>> ObtenerTodosPaginados(int pagina, int cantidadPorPagina, List<int>? categorias = null)
+    public async Task<List<Producto>> ObtenerTodosPaginados(int pagina, int cantidadPorPagina, List<int>? categorias = null, string? terminoBusqueda = null)
     {
         var fechaActual = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
@@ -27,6 +27,12 @@ public class ProductoRepositorio : IProductoRepositorio
             .Include(p => p.OfertasFlashes.Where(of => of.FechaInicio <= fechaActual && of.FechaFin >= fechaActual && !of.EstadoEliminado))
             .Include(p => p.PreciosGeolocalizados)
             .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(terminoBusqueda))
+        {
+            query = query.Where(p => p.Nombre.ToLower().Contains(terminoBusqueda.ToLower()) || 
+                                     (p.Descripcion != null && p.Descripcion.ToLower().Contains(terminoBusqueda.ToLower())));
+        }
 
         if (categorias != null && categorias.Any())
         {

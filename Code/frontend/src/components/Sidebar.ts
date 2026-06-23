@@ -2,20 +2,13 @@ import type { AppState, Category } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import { MAX_PRICE_DEFAULT } from '../utils/products.js';
 
-const CATEGORIES: Category[] = [
-  'Todo',
-  'Electronicos',
-  'Fashion',
-  'Libros',
-  'Hogar',
-  'Deportes',
-  'Belleza',
-];
+import { api } from '../utils/api.js';
 
 export class SidebarComponent {
   private element: HTMLElement;
   private store: Store<AppState>;
   private unsubs: Array<() => void> = [];
+  private categories: Category[] = ['Todo'];
 
   constructor(store: Store<AppState>) {
     this.store = store;
@@ -23,6 +16,24 @@ export class SidebarComponent {
     this.element.className = 'sidebar';
     this.render();
     this.bindStoreUpdates();
+    this.loadCategories();
+  }
+
+  private async loadCategories() {
+    try {
+      const { data, error } = await api.GET('/Categoria');
+      if (data && Array.isArray(data)) {
+        const fetchedCats = (data as Record<string, unknown>[]).map(
+          (c: Record<string, unknown>) => (c.nombre as string) || ''
+        );
+        this.categories = ['Todo', ...fetchedCats.filter(Boolean)];
+        this.render();
+      } else if (error) {
+        console.error('Failed to load categories:', error);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
   }
 
   private render(): void {
@@ -34,7 +45,7 @@ export class SidebarComponent {
         <ul class="sidebar__category-list">
     `;
 
-    CATEGORIES.forEach((cat) => {
+    this.categories.forEach((cat) => {
       const activeClass =
         cat === selectedCategory ? 'sidebar__category-btn--active' : '';
       html += `
