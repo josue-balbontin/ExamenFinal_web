@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Backend.Repositorio;
+namespace Backend.Infrestructura.Repositorio;
 
 public class ProductoRepositorio : IProductoRepositorio
 {
@@ -23,6 +23,7 @@ public class ProductoRepositorio : IProductoRepositorio
 
         var query = _context.Productos
             .Include(p => p.IdCategoriaNavigation)
+            .Include(p => p.IdVendedorNavigation)
             .Include(p => p.OfertasFlashes.Where(of => of.FechaInicio <= fechaActual && of.FechaFin >= fechaActual && !of.EstadoEliminado))
             .Include(p => p.PreciosGeolocalizados)
             .AsQueryable();
@@ -45,6 +46,7 @@ public class ProductoRepositorio : IProductoRepositorio
 
         return await _context.Productos
             .Include(p => p.IdCategoriaNavigation)
+            .Include(p => p.IdVendedorNavigation)
             .Include(p => p.OfertasFlashes.Where(of => of.FechaInicio <= fechaActual && of.FechaFin >= fechaActual && !of.EstadoEliminado))
             .Include(p => p.PreciosGeolocalizados)
             .Where(p => ids.Contains(p.IdProducto))

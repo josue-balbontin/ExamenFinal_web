@@ -1,11 +1,13 @@
 using Backend.Infrestructura.Conexion;
 using Backend.Modelos.Entidades;
 using Backend.Modelos.ResponseDto;
-using Backend.Repositorio;
+using Backend.Infrestructura.Repositorio;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -18,19 +20,22 @@ public class ProductoServicio : IProductoServicio
     private readonly ElasticsearchContext _elasticContext;
     private readonly ClickHouseContext _clickHouseContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly MongoDbContext _mongoContext;
 
     public ProductoServicio(
         IProductoRepositorio repositorio,
         RedisContext redisContext,
         ElasticsearchContext elasticContext,
         ClickHouseContext clickHouseContext,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        MongoDbContext mongoContext)
     {
         _repositorio = repositorio;
         _redisContext = redisContext;
         _elasticContext = elasticContext;
         _clickHouseContext = clickHouseContext;
         _httpContextAccessor = httpContextAccessor;
+        _mongoContext = mongoContext;
     }
 
     public async Task<List<ProductoResponseDto>> BuscarProductosAsync(string? terminoBusqueda, List<int>? categorias, int pagina)
@@ -63,7 +68,7 @@ public class ProductoServicio : IProductoServicio
             {
                 // Búsqueda en Elasticsearch
                 var response = await _elasticContext.Client.SearchAsync<Producto>(s => s
-                    .Index("productos")
+                    .Indices("productos")
                     .Query(q => q
                         .Match(m => m
                             .Field(f => f.Nombre)
@@ -90,8 +95,21 @@ public class ProductoServicio : IProductoServicio
             productosRaw = await _repositorio.ObtenerTodosPaginados(pagina, cantidadPorPagina, categorias);
         }
 
+        // Obtener calificaciones de Mongo
+        var idsProductos = productosRaw.Select(p => p.IdProducto).ToList();
+        var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+        var filter = Builders<BsonDocument>.Filter.In("id_producto", idsProductos);
+        var resenas = await collection.Find(filter).ToListAsync();
+
+        var promedios = resenas
+            .GroupBy(r => r["id_producto"].AsInt32)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Average(r => r["calificacion"].AsInt32)
+            );
+
         // Mapeo y cálculo de precios por región
-        var resultado = productosRaw.Select(p => MapearA_Dto(p, region)).ToList();
+        var resultado = productosRaw.Select(p => MapearA_Dto(p, region, promedios.ContainsKey(p.IdProducto) ? promedios[p.IdProducto] : 0.0)).ToList();
 
         // Guardar resultado en Redis por 10 minutos
         await dbRedis.StringSetAsync(cacheKey, JsonSerializer.Serialize(resultado), TimeSpan.FromMinutes(10));
@@ -99,7 +117,7 @@ public class ProductoServicio : IProductoServicio
         return resultado;
     }
 
-    private ProductoResponseDto MapearA_Dto(Producto p, string region)
+    private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas)
     {
         double precioAplicado = p.PrecioBase;
         
@@ -130,7 +148,9 @@ public class ProductoServicio : IProductoServicio
             UrlImagen = p.UrlImagen ?? "",
             Stock = p.Stock,
             PorcentajeDescuentoFlash = descuento,
-            Categoria = p.IdCategoriaNavigation?.Nombre ?? ""
+            Categoria = p.IdCategoriaNavigation?.Nombre ?? "",
+            NombreVendedor = p.IdVendedorNavigation != null ? $"{p.IdVendedorNavigation.Nombre} {p.IdVendedorNavigation.Apellido}".Trim() : "",
+            Estrellas = Math.Round(estrellas, 1)
         };
     }
 

@@ -11,4 +11,6 @@ public class ProductoResponseDto
     public int Stock { get; set; }
     public double PorcentajeDescuentoFlash { get; set; }
     public string Categoria { get; set; } = string.Empty;
+    public string NombreVendedor { get; set; } = string.Empty;
+    public double Estrellas { get; set; }
 }

@@ -1,6 +1,6 @@
 using Backend.Infrestructura.Conexion;
 using Backend.Middlewares;
-using Backend.Repositorio;
+using Backend.Infrestructura.Repositorio;
 using Backend.Servicios;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -32,8 +32,8 @@ builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseNpgsql
 var mongoUser = Environment.GetEnvironmentVariable("MONGO_INITDB_ROOT_USERNAME");
 var mongoPass = Environment.GetEnvironmentVariable("MONGO_INITDB_ROOT_PASSWORD");
 var mongoPort = Environment.GetEnvironmentVariable("MONGO_PORT") ?? "27017";
-var mongoConnStr = $"mongodb://{mongoUser}:{mongoPass}@localhost:{mongoPort}";
-builder.Services.AddSingleton<MongoDbContext>(sp => new MongoDbContext(mongoConnStr, pgDb ?? "mydb"));
+var mongoConnStr = $"mongodb://{mongoUser}:{mongoPass}@localhost:{mongoPort}/?authSource=admin";
+builder.Services.AddSingleton<MongoDbContext>(sp => new MongoDbContext(mongoConnStr, "ugc_marketplace"));
 
 // Redis
 var redisPass = Environment.GetEnvironmentVariable("REDIS_PASSWORD");

@@ -2,7 +2,7 @@ using Backend.Modelos.Entidades;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Backend.Repositorio;
+namespace Backend.Infrestructura.Repositorio;
 
 public interface IProductoRepositorio
 {
