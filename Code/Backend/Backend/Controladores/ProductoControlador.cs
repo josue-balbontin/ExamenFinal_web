@@ -1,5 +1,8 @@
 using Backend.Servicios;
+using Backend.Modelos.RequestDto;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -69,6 +72,36 @@ public class ProductoControlador : ControllerBase
         {
             var resenas = await _servicio.ObtenerResenasDeProductoAsync(id);
             return Ok(resenas);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/reviews")]
+    [Authorize]
+    public async Task<IActionResult> AgregarResena(int id, [FromBody] CrearResenaRequestDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+        {
+            return Unauthorized(new { mensaje = "No se pudo identificar al usuario." });
+        }
+
+        try
+        {
+            await _servicio.AgregarResenaAsync(id, idUsuario, request);
+            return Ok(new { mensaje = "Reseña guardada exitosamente." });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
         }
         catch (Exception ex)
         {

@@ -222,6 +222,31 @@ public class ProductoServicio : IProductoServicio
         return response;
     }
 
+    public async Task AgregarResenaAsync(int idProducto, int idUsuario, CrearResenaRequestDto request)
+    {
+        // 1. Validar que el producto exista en PostgreSQL
+        var productoExiste = await _repositorio.ObtenerPorId(idProducto);
+        if (productoExiste == null)
+        {
+            throw new ArgumentException("El producto especificado no existe.");
+        }
+
+        // 2. Insertar en MongoDB
+        var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+
+        var nuevaResena = new BsonDocument
+        {
+            { "id_producto", idProducto },
+            { "id_usuario_cliente", idUsuario },
+            { "calificacion", request.Calificacion },
+            { "comentario", request.Comentario },
+            { "fecha_creacion", BsonDateTime.Create(DateTime.UtcNow) },
+            { "util_votos", 0 }
+        };
+
+        await collection.InsertOneAsync(nuevaResena);
+    }
+
     private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas)
     {
         double precioAplicado = p.PrecioBase;
