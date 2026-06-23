@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
 using Backend.Modelos.Entidades;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Conexion;
+namespace Backend.Infrestructura.Conexion;
 
 public partial class MarketplaceDbContext : DbContext
 {
@@ -37,8 +35,19 @@ public partial class MarketplaceDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=FINAL_WEB;Username=postgres;Password=273153");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            DotNetEnv.Env.TraversePath().Load(".env.development");
+            var pgUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
+            var pgPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "postgres";
+            var pgDb = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "postgres";
+            var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
+            var pgHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+
+            optionsBuilder.UseNpgsql($"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,4 +1,3 @@
-using Backend.Conexion;
 using Backend.Infrestructura.Conexion;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +14,8 @@ var pgUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
 var pgPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 var pgDb = Environment.GetEnvironmentVariable("POSTGRES_DB");
 var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
-var pgConnStr = $"Host=localhost;Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}";
+var pgHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+var pgConnStr = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}";
 
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(pgConnStr);
 dataSourceBuilder.MapEnum<Backend.Modelos.Entidades.EstadoPedido>("esquema_marketplace.estado_pedido");
