@@ -1,6 +1,8 @@
+using Backend.Conexion;
 using Backend.Infrestructura.Conexion;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 Env.TraversePath().Load(".env.development");
 
@@ -14,7 +16,14 @@ var pgPass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 var pgDb = Environment.GetEnvironmentVariable("POSTGRES_DB");
 var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
 var pgConnStr = $"Host=localhost;Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}";
-builder.Services.AddDbContext<PostgresContext>(options => options.UseNpgsql(pgConnStr));
+
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(pgConnStr);
+dataSourceBuilder.MapEnum<Backend.Modelos.Entidades.EstadoPedido>("esquema_marketplace.estado_pedido");
+dataSourceBuilder.MapEnum<Backend.Modelos.Entidades.EstadoPagoComision>("esquema_marketplace.estado_pago_comision");
+dataSourceBuilder.MapEnum<Backend.Modelos.Entidades.EstadoSolicitud>("esquema_marketplace.estado_solicitud");
+var dataSource = dataSourceBuilder.Build();
+
+builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseNpgsql(dataSource));
 
 // MongoDB
 var mongoUser = Environment.GetEnvironmentVariable("MONGO_INITDB_ROOT_USERNAME");

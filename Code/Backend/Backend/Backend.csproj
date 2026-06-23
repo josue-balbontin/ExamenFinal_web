@@ -11,7 +11,11 @@
         <PackageReference Include="ClickHouse.Client" Version="7.14.0" />
         <PackageReference Include="DotNetEnv" Version="3.2.0" />
         <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.4.2" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.9">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -31,8 +35,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Core\" />
       <Folder Include="Infrestructura\" />
+      <Folder Include="Modelos\RequestDto\" />
       <Folder Include="Servicios\" />
     </ItemGroup>
 
