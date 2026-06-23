@@ -1,6 +1,7 @@
 using Backend.Infrestructura.Conexion;
 using Backend.Middlewares;
 using Backend.Infrestructura.Repositorio;
+using Backend.Infrestructura.Data;
 using Backend.Servicios;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IProductoServicio, ProductoServicio>();
 
+// Registrar DataSeeder
+builder.Services.AddTransient<DataSeeder>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -78,5 +82,12 @@ app.UseMiddleware<IpRegionMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+// Ejecutar el DataSeeder
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAsync();
+}
 
 app.Run();

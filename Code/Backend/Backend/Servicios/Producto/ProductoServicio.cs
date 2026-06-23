@@ -71,7 +71,7 @@ public class ProductoServicio : IProductoServicio
                     .Indices("productos")
                     .Query(q => q
                         .Match(m => m
-                            .Field(f => f.Nombre)
+                            .Field("nombre")
                             .Query(terminoBusqueda)
                         )
                     )

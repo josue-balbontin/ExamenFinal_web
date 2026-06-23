@@ -10,7 +10,7 @@ public class ElasticsearchContext
     public ElasticsearchContext(string url, string username = "elastic", string? password = null)
     {
         var settings = new ElasticsearchClientSettings(new Uri(url));
-        
+        settings.DefaultFieldNameInferrer(p => char.ToLowerInvariant(p[0]) + p.Substring(1));
        
         if (!string.IsNullOrEmpty(password))
         {

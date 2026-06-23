@@ -33,7 +33,7 @@ def clickhouse_view(request):
         user = os.environ.get('CLICKHOUSE_USER', 'default')
         pwd = os.environ.get('CLICKHOUSE_PASSWORD', '')
         db = os.environ.get('CLICKHOUSE_DB', 'default')
-        port = int(os.environ.get('CLICKHOUSE_HTTP_PORT', '8124'))
+        port = int(os.environ.get('CLICKHOUSE_PORT', '8123'))
         host = 'localhost' if os.environ.get('POSTGRES_HOST') == 'localhost' else 'clickhouse'
         
         client = clickhouse_connect.get_client(host=host, port=port, username=user, password=pwd, database=db)

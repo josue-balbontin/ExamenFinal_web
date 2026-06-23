@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Backend.Modelos.Entidades;
 
 public partial class Producto
 {
+    [JsonPropertyName("idProducto")]
     public int IdProducto { get; set; }
 
     public int IdVendedor { get; set; }
