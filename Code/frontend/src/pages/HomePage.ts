@@ -4,23 +4,23 @@ import type { Router } from '../utils/router.js';
 import { NavbarComponent } from '../components/Navbar.js';
 import { SidebarComponent } from '../components/Sidebar.js';
 import { ProductGridComponent } from '../components/ProductGrid.js';
+import { CartDrawerComponent } from '../components/CartDrawer.js';
 import { MAX_PRICE_DEFAULT } from '../utils/products.js';
 
 export function createHomePage(
   store: Store<AppState>,
   router: Router
 ): HTMLElement {
-  // Guard: redirect if not authenticated
   if (!store.getState().auth.isAuthenticated) {
     router.navigate('/login');
     return document.createElement('div');
   }
 
-  // Reset marketplace filters on entry
   store.setState({
     searchQuery: '',
     selectedCategory: 'Todo',
     maxPrice: MAX_PRICE_DEFAULT,
+    cartOpen: false,
   });
 
   const page = document.createElement('div');
@@ -44,6 +44,9 @@ export function createHomePage(
 
   layout.appendChild(main);
   page.appendChild(layout);
+
+  const cartDrawer = new CartDrawerComponent(store);
+  page.appendChild(cartDrawer.getElement());
 
   return page;
 }
