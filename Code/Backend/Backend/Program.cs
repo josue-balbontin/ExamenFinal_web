@@ -6,6 +6,7 @@ using Backend.Infrestructura.Data;
 using Backend.Servicios;
 using Backend.Servicios.Email;
 using Backend.Servicios.Notificacion;
+using Backend.Servicios.Pedido;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -33,7 +34,13 @@ dataSourceBuilder.MapEnum<Backend.Modelos.Entidades.EstadoPagoComision>("esquema
 dataSourceBuilder.MapEnum<Backend.Modelos.Entidades.EstadoSolicitud>("esquema_marketplace.estado_solicitud");
 var dataSource = dataSourceBuilder.Build();
 
-builder.Services.AddDbContext<MarketplaceDbContext>(options => options.UseNpgsql(dataSource));
+builder.Services.AddDbContext<MarketplaceDbContext>(options => 
+    options.UseNpgsql(dataSource, o => 
+    {
+        o.MapEnum<Backend.Modelos.Entidades.EstadoPedido>("esquema_marketplace.estado_pedido");
+        o.MapEnum<Backend.Modelos.Entidades.EstadoPagoComision>("esquema_marketplace.estado_pago_comision");
+        o.MapEnum<Backend.Modelos.Entidades.EstadoSolicitud>("esquema_marketplace.estado_solicitud");
+    }));
 
 // MongoDB
 var mongoUser = Environment.GetEnvironmentVariable("MONGO_INITDB_ROOT_USERNAME");
@@ -112,6 +119,7 @@ builder.Services.AddScoped<IProductoServicio, ProductoServicio>();
 builder.Services.AddScoped<Backend.Servicios.Auth.IAuthServicio, Backend.Servicios.Auth.AuthServicio>();
 builder.Services.AddScoped<IEmailServicio, EmailServicio>();
 builder.Services.AddScoped<INotificacionServicio, NotificacionServicio>();
+builder.Services.AddScoped<IPedidoServicio, PedidoServicio>();
 
 // Registrar DataSeeder
 builder.Services.AddTransient<DataSeeder>();

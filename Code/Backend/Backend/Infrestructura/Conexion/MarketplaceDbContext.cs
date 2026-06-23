@@ -45,7 +45,20 @@ public partial class MarketplaceDbContext : DbContext
             var pgPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
             var pgHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
 
-            optionsBuilder.UseNpgsql($"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}");
+            var pgConnStr = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass}";
+            
+            var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(pgConnStr);
+            dataSourceBuilder.MapEnum<EstadoPedido>("esquema_marketplace.estado_pedido");
+            dataSourceBuilder.MapEnum<EstadoPagoComision>("esquema_marketplace.estado_pago_comision");
+            dataSourceBuilder.MapEnum<EstadoSolicitud>("esquema_marketplace.estado_solicitud");
+            var dataSource = dataSourceBuilder.Build();
+
+            optionsBuilder.UseNpgsql(dataSource, o => 
+            {
+                o.MapEnum<EstadoPedido>("esquema_marketplace.estado_pedido");
+                o.MapEnum<EstadoPagoComision>("esquema_marketplace.estado_pago_comision");
+                o.MapEnum<EstadoSolicitud>("esquema_marketplace.estado_solicitud");
+            });
         }
     }
 
@@ -182,6 +195,7 @@ public partial class MarketplaceDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("metodo_pago");
             entity.Property(e => e.TotalPagado).HasColumnName("total_pagado");
+            entity.Property(e => e.Estado).HasColumnName("estado");
 
             entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.Pedidos)
                 .HasForeignKey(d => d.IdCliente)
