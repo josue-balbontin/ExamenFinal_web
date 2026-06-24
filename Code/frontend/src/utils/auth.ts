@@ -65,3 +65,39 @@ export async function registerService(data: RegisterFormData): Promise<User> {
 export async function logoutService(): Promise<void> {
   localStorage.removeItem('token');
 }
+
+export async function forgotPasswordService(
+  email: string
+): Promise<string | null> {
+  const { data: responseData, error } = await api.POST(
+    '/Auth/olvido-password',
+    {
+      body: { email },
+    }
+  );
+
+  if (error) {
+    throw new Error(
+      ((error as Record<string, unknown>)?.mensaje as string) ||
+        'Error al solicitar recuperación de contraseña.'
+    );
+  }
+
+  return (responseData as { token?: string })?.token || null;
+}
+
+export async function resetPasswordService(
+  token: string,
+  nuevoPassword: string
+): Promise<void> {
+  const { error } = await api.POST('/Auth/reset-password', {
+    body: { token, nuevoPassword },
+  });
+
+  if (error) {
+    throw new Error(
+      ((error as Record<string, unknown>)?.mensaje as string) ||
+        'Error al restablecer la contraseña.'
+    );
+  }
+}
