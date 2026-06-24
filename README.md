@@ -120,6 +120,14 @@ Para levantar todo el entorno de desarrollo del monolito modular (bases de datos
    - **Backend API (Swagger):** [http://localhost/swagger](http://localhost/swagger) (Redirigido a la API en C#)
    - **Django Admin:** [http://localhost/admin](http://localhost/admin) (Redirigido al panel administrativo)
 
+5.**Claves**
+  - Por defecto en la bd las clave es : 123456789 
+  - usuario de admin es admin@marketplace.com
+  - usuario administrador RRHH : rrhh@marketplace.com
+  - vendedor : carlos@techstore.com
+
+
+
 Para instrucciones específicas sobre cómo desarrollar en el Frontend localmente, consulta el [README del Frontend](./Code/frontend/README.md).
 
 ## Documentación Adicional
