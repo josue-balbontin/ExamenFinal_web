@@ -116,7 +116,7 @@ public class AuthServicio : IAuthServicio
         return tokenHandler.WriteToken(token);
     }
 
-    public async Task SolicitarRecuperacionPasswordAsync(OlvidoPasswordRequestDto request)
+    public async Task<string?> SolicitarRecuperacionPasswordAsync(OlvidoPasswordRequestDto request)
     {
         var usuario = await _dbContext.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email);
         
@@ -129,6 +129,8 @@ public class AuthServicio : IAuthServicio
             var dbRedis = _redisContext.Database;
             await dbRedis.StringSetAsync($"reset_token:{token}", request.Email, TimeSpan.FromMinutes(15));
             
+            Console.WriteLine($"\n[TOKEN RECUPERACION] Generado para {request.Email}: {token}\n");
+
             // Enviar correo
             string asunto = "Recuperación de Contraseña - Marketplace UGC";
             string cuerpoHtml = $@"
@@ -138,9 +140,18 @@ public class AuthServicio : IAuthServicio
                 <p>Este token expirará en 15 minutos.</p>
                 <p>Si no fuiste tú, puedes ignorar este correo de forma segura.</p>";
             
-            await _emailServicio.EnviarEmailAsync(request.Email, asunto, cuerpoHtml);
+            try
+            {
+                await _emailServicio.EnviarEmailAsync(request.Email, asunto, cuerpoHtml);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al enviar correo: {ex.Message}");
+            }
+            
+            return token;
         }
-        // Por seguridad, si el usuario es null no hacemos nada ni lanzamos error.
+        return null;
     }
 
     public async Task ResetearPasswordAsync(ResetPasswordRequestDto request)

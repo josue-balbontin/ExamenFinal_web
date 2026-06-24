@@ -70,7 +70,9 @@ export type Route =
   | '/home'
   | '/product'
   | '/profile'
-  | '/checkout';
+  | '/checkout'
+  | '/forgot-password'
+  | '/reset-password';
 
 export interface CartItem {
   idProducto: number;

@@ -25,7 +25,7 @@ export function createLoginPage(
       router.navigate('/home');
     },
     onForgotPassword: () => {
-      alert('Funcionalidad de recuperación próximamente.');
+      router.navigate('/forgot-password');
     },
     onRegister: () => {
       router.navigate('/register');

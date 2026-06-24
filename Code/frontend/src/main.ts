@@ -10,6 +10,8 @@ import { MAX_PRICE_DEFAULT } from './utils/products.js';
 import { createProfilePage } from './pages/ProfilePage.js';
 import { createCheckoutPage } from './pages/CheckoutPage.js';
 import { fetchCart } from './utils/cartServices.js';
+import { createForgotPasswordPage } from './pages/ForgotPasswordPage.js';
+import { createResetPasswordPage } from './pages/ResetPasswordPage.js';
 
 const initialState: AppState = {
   auth: {
@@ -42,6 +44,8 @@ router
   .register('/home', () => createHomePage(store, router))
   .register('/profile', () => createProfilePage(store, router))
   .register('/checkout', () => createCheckoutPage(store, router))
+  .register('/forgot-password', () => createForgotPasswordPage(router))
+  .register('/reset-password', () => createResetPasswordPage(router))
   .register('/product', () => {
     const id = window.location.pathname.split('/').pop() ?? '1';
     return createProductDetailPage(store, router, id);

@@ -9,7 +9,7 @@ public interface IAuthServicio
 {
     Task RegistrarUsuarioAsync(RegistroRequestDto request);
     Task<UsuarioResponseDto> LoginAsync(LoginRequestDto request);
-    Task SolicitarRecuperacionPasswordAsync(OlvidoPasswordRequestDto request);
+    Task<string?> SolicitarRecuperacionPasswordAsync(OlvidoPasswordRequestDto request);
     Task ResetearPasswordAsync(ResetPasswordRequestDto request);
     Task<UsuarioResponseDto> EditarPerfilAsync(int idUsuario, EditarPerfilRequestDto request);
     Task SolicitarSerVendedorAsync(int idUsuario, SolicitudVendedorRequestDto request);

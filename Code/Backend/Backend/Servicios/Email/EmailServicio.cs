@@ -43,6 +43,14 @@ public class EmailServicio : IEmailServicio
         };
         mailMessage.To.Add(destino);
 
-        await client.SendMailAsync(mailMessage);
+        try
+        {
+            await client.SendMailAsync(mailMessage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al enviar correo SMTP: {ex.Message}");
+            // En desarrollo, no lanzamos la excepción para evitar romper el flujo si el SMTP no sirve.
+        }
     }
 }

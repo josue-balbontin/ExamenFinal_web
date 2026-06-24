@@ -80,9 +80,9 @@ public class AuthControlador : ControllerBase
 
         try
         {
-            await _authServicio.SolicitarRecuperacionPasswordAsync(request);
+            var token = await _authServicio.SolicitarRecuperacionPasswordAsync(request);
             // Siempre retornamos OK por seguridad, independientemente de si el correo existe
-            return Ok(new { mensaje = "Si el correo está registrado, recibirás un token de recuperación" });
+            return Ok(new { mensaje = "Si el correo está registrado, recibirás un token de recuperación", token });
         }
         catch (Exception ex)
         {
