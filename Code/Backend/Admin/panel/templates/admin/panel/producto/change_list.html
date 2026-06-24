@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+
+{% block result_list %}
+    {% if cl.result_count == 0 and cl.is_popup == False %}
+        <div style="padding: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; text-align: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">No hay coincidencias</h2>
+            <p>Ningún producto cumple con las condiciones actuales de búsqueda o filtro (ej. Stock menor a 5).</p>
+        </div>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

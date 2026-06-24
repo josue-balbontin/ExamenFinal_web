@@ -14,6 +14,14 @@ class SolicitudVendedorAdmin(admin.ModelAdmin):
             return qs
         return qs.none()
 
+    def changelist_view(self, request, extra_context=None):
+        if not request.GET and not request.META.get('QUERY_STRING'):
+            q = request.GET.copy()
+            q['estado__exact'] = 'pendiente'
+            request.GET = q
+            request.META['QUERY_STRING'] = request.GET.urlencode()
+        return super().changelist_view(request, extra_context=extra_context)
+
     @admin.action(description='Aprobar solicitudes seleccionadas')
     def aprobar_solicitudes(self, request, queryset):
         try:
@@ -23,8 +31,8 @@ class SolicitudVendedorAdmin(admin.ModelAdmin):
             return
 
         count = 0
-        for solicitud in queryset.filter(estado='Pendiente'):
-            solicitud.estado = 'Aprobada'
+        for solicitud in queryset.filter(estado='pendiente'):
+            solicitud.estado = 'aprobada'
             solicitud.fecha_resolucion = timezone.now()
             solicitud.save()
 
@@ -38,8 +46,8 @@ class SolicitudVendedorAdmin(admin.ModelAdmin):
     @admin.action(description='Rechazar solicitudes seleccionadas')
     def rechazar_solicitudes(self, request, queryset):
         count = 0
-        for solicitud in queryset.filter(estado='Pendiente'):
-            solicitud.estado = 'Rechazada'
+        for solicitud in queryset.filter(estado='pendiente'):
+            solicitud.estado = 'rechazada'
             solicitud.fecha_resolucion = timezone.now()
             solicitud.save()
             count += 1
@@ -66,7 +74,5 @@ class ProductoAdmin(admin.ModelAdmin):
     search_fields = ('nombre',)
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.groups.filter(name='Control de Stock').exists() or request.user.is_superuser:
-            return qs
-        return qs.none()
+        # Admin (superuser) y cualquier staff ven todos los productos
+        return super().get_queryset(request)
