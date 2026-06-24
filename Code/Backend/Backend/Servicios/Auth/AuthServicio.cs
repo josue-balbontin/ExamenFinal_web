@@ -49,7 +49,7 @@ public class AuthServicio : IAuthServicio
             PasswordHash = hash,
             Telefono = request.Telefono,
             DireccionPrincipal = request.Direccion,
-            IdRol = 2, // 2 = Comprador/Usuario Regular (según configuración usual)
+            IdRol = 4, // 4 = Cliente
             FechaRegistro = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
             EstadoEliminado = false
         };
@@ -226,5 +226,42 @@ public class AuthServicio : IAuthServicio
             FechaRegistro = usuario.FechaRegistro,
             Token = string.Empty // No es necesario regenerar el token si no cambian los claims fundamentales o si el frontend no lo espera
         };
+    }
+
+    public async Task SolicitarSerVendedorAsync(int idUsuario, SolicitudVendedorRequestDto request)
+    {
+        var usuario = await _dbContext.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
+        if (usuario == null || usuario.EstadoEliminado)
+        {
+            throw new ArgumentException("Usuario no encontrado.");
+        }
+
+        // Si ya es vendedor, rechazar
+        if (usuario.IdRol == 2) // Asumiendo que 2 es el IdRol de Vendedor
+        {
+            throw new ArgumentException("El usuario ya es un vendedor.");
+        }
+
+        // Validar si ya tiene una solicitud pendiente (Filtrado en memoria para evitar bug de casteo SQL del Enum en Npgsql)
+        var solicitudesDelUsuario = await _dbContext.Set<SolicitudesVendedor>()
+            .Where(s => s.IdUsuario == idUsuario && !s.EstadoEliminado)
+            .ToListAsync();
+        
+        if (solicitudesDelUsuario.Any(s => s.Estado == EstadoSolicitud.pendiente))
+        {
+            throw new ArgumentException("Ya tienes una solicitud pendiente de revisión.");
+        }
+
+        var nuevaSolicitud = new SolicitudesVendedor
+        {
+            IdUsuario = idUsuario,
+            DocumentacionUrl = request?.DocumentacionUrl,
+            FechaSolicitud = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
+            Estado = EstadoSolicitud.pendiente,
+            EstadoEliminado = false
+        };
+
+        _dbContext.Set<SolicitudesVendedor>().Add(nuevaSolicitud);
+        await _dbContext.SaveChangesAsync();
     }
 }

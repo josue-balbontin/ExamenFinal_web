@@ -32,9 +32,9 @@ class Usuario(models.Model):
 
 class SolicitudVendedor(models.Model):
     ESTADO_CHOICES = [
-        ('Pendiente', 'Pendiente'),
-        ('Aprobada', 'Aprobada'),
-        ('Rechazada', 'Rechazada')
+        ('pendiente', 'Pendiente'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada')
     ]
     
     id_solicitud = models.AutoField(primary_key=True)
