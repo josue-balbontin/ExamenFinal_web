@@ -1,0 +1,6 @@
+@media (width <= 480px) {
+  .auth-card,
+  .dashboard-card {
+    padding: 2rem 1.25rem;
+  }
+}

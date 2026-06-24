@@ -1,0 +1,166 @@
+/* ===========================
+   STATUS-MODAL — BEM block
+   =========================== */
+.status-modal-wrapper {
+  inset: 0;
+  position: fixed;
+  z-index: 400;
+}
+
+/* Backdrop */
+.status-modal-backdrop {
+  background: rgb(0 0 0 / 40%);
+  inset: 0;
+  position: fixed;
+  transition: opacity 0.22s ease;
+}
+
+/* Box */
+.status-modal {
+  align-items: center;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 40px rgb(0 0 0 / 18%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  left: 50%;
+  max-width: 340px;
+  padding: 2.5rem 2rem 2rem;
+  position: fixed;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+  width: calc(100% - 2rem);
+}
+
+/* Closing animation */
+.status-modal-wrapper--closing .status-modal-backdrop {
+  opacity: 0;
+}
+
+.status-modal-wrapper--closing .status-modal {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+/* Icon wrapper */
+.status-modal__icon-wrapper {
+  align-items: center;
+  border-radius: 50%;
+  display: flex;
+  height: 52px;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+  width: 52px;
+}
+
+.status-modal__icon-wrapper svg {
+  height: 26px;
+  width: 26px;
+}
+
+.status-modal__icon-wrapper--success {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.status-modal__icon-wrapper--error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-modal__icon-wrapper--warning {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.status-modal__icon-wrapper--info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Title */
+.status-modal__title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* Optional message */
+.status-modal__message {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: -0.25rem;
+}
+
+/* Close button — circle with X */
+.status-modal__close-btn {
+  align-items: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  margin-top: 0.5rem;
+  transition:
+    opacity var(--transition),
+    transform var(--transition);
+  width: 44px;
+}
+
+.status-modal__close-btn:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+.status-modal__close-btn:focus-visible {
+  outline: 3px solid var(--color-border-focus);
+  outline-offset: 3px;
+}
+
+.status-modal__close-btn svg {
+  height: 18px;
+  pointer-events: none;
+  width: 18px;
+}
+
+.status-modal__close-btn--success {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.status-modal__close-btn--error {
+  background: #ef4444;
+  color: #fff;
+}
+
+.status-modal__close-btn--warning {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.status-modal__close-btn--info {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Optional label under close button */
+.status-modal__close-label {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  margin-top: -0.25rem;
+}
+
+/* Responsive */
+@media (width <= 400px) {
+  .status-modal {
+    padding: 2rem 1.25rem 1.5rem;
+  }
+}

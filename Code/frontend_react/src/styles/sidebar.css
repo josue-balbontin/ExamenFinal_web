@@ -1,0 +1,73 @@
+.sidebar {
+  border-right: 1px solid var(--color-border);
+  flex-shrink: 0;
+  padding: 1.5rem 1rem;
+  width: 180px;
+}
+
+.sidebar__label {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.75rem;
+}
+
+.sidebar__label--price {
+  margin-top: 1.75rem;
+}
+
+.sidebar__category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  list-style: none;
+}
+
+.sidebar__category-btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.75rem;
+  text-align: left;
+  transition: background-color var(--transition);
+  width: 100%;
+}
+
+.sidebar__category-btn:hover {
+  background: var(--color-bg);
+}
+
+.sidebar__category-btn--active {
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-weight: 600;
+}
+
+.sidebar__category-btn--active:hover {
+  background: #1f2937;
+}
+
+.sidebar__price-value {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar__slider {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  width: 100%;
+}
+
+.sidebar__price-range {
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+}

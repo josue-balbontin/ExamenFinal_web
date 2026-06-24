@@ -1,0 +1,142 @@
+.product-card {
+  background: var(--color-surface);
+  border: 1.5px solid #d1d5db;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    box-shadow var(--transition),
+    border-color var(--transition);
+}
+
+.product-card:hover {
+  border-color: #9ca3af;
+  box-shadow: var(--shadow-card);
+}
+
+.product-card__img-wrapper {
+  aspect-ratio: 4 / 3;
+  background: #d1d5db;
+  overflow: hidden;
+  width: 100%;
+}
+
+.product-card__img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.product-card__img-placeholder {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.product-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.product-card__category {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.product-card__name {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.product-card__seller {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.product-card__seller span {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.product-card__rating {
+  align-items: center;
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+}
+
+.product-card__stars {
+  display: flex;
+  gap: 1px;
+}
+
+.product-card__star {
+  font-size: 0.85rem;
+}
+
+.product-card__star--full {
+  color: #f59e0b;
+}
+
+.product-card__star--empty {
+  color: #d1d5db;
+}
+
+.product-card__rating-value {
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.product-card__review-count {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.product-card__price-row {
+  align-items: baseline;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.product-card__price {
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.product-card__original-price {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-decoration: line-through;
+}
+
+.product-card__add-btn {
+  background: var(--color-text);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-surface);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  padding: 0.55rem 1rem;
+  transition: background-color var(--transition);
+  width: 100%;
+}
+
+.product-card__add-btn:hover {
+  background: #1f2937;
+}
+
+.product-card__add-btn:active {
+  background: #111827;
+}

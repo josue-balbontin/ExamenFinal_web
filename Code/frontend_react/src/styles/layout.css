@@ -1,0 +1,15 @@
+.page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.page--auth {
+  background-color: var(--color-bg);
+}
+
+.page--dashboard {
+  background-color: var(--color-bg);
+}
