@@ -21,6 +21,8 @@ const initialState: AppState = {
   currentRoute: '/login',
   cart: [],
   cartOpen: false,
+  notifications: [],
+  notifOpen: false,
   searchQuery: '',
   selectedCategory: 'Todo',
   maxPrice: MAX_PRICE_DEFAULT,

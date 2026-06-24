@@ -1,4 +1,5 @@
 // Cart items definition moved below
+import type { AppNotification } from './notification.js';
 
 export interface User {
   id?: string;
@@ -87,6 +88,8 @@ export interface AppState {
   currentRoute: Route;
   cart: CartItem[];
   cartOpen: boolean;
+  notifications: AppNotification[];
+  notifOpen: boolean;
   searchQuery: string;
   selectedCategory: Category;
   maxPrice: number;
