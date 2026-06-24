@@ -146,4 +146,31 @@ public class AuthControlador : ControllerBase
             return StatusCode(500, new { mensaje = "Error interno del servidor: " + ex.Message });
         }
     }
+
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpPost("solicitar-vendedor")]
+    public async Task<IActionResult> SolicitarSerVendedor([FromBody] SolicitudVendedorRequestDto request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                              ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+            {
+                return Unauthorized(new { mensaje = "Token inválido o usuario no autenticado" });
+            }
+
+            await _authServicio.SolicitarSerVendedorAsync(idUsuario, request);
+            return Ok(new { mensaje = "Solicitud para ser vendedor enviada exitosamente" });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensaje = "Error interno del servidor: " + ex.Message });
+        }
+    }
 }

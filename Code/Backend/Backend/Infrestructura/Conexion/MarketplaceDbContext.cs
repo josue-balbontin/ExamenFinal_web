@@ -301,7 +301,7 @@ public partial class MarketplaceDbContext : DbContext
             entity.Property(e => e.IdRrhhAprobador).HasColumnName("id_rrhh_aprobador");
             entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
             entity.Property(e => e.ObservacionesRrhh).HasColumnName("observaciones_rrhh");
-
+            entity.Property(e => e.Estado).HasColumnName("estado");
             entity.HasOne(d => d.IdRrhhAprobadorNavigation).WithMany(p => p.SolicitudesVendedorIdRrhhAprobadorNavigations)
                 .HasForeignKey(d => d.IdRrhhAprobador)
                 .HasConstraintName("solicitudes_vendedor_id_rrhh_aprobador_fkey");
