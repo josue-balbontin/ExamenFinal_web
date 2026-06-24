@@ -33,6 +33,8 @@ export class MyStoreTabComponent {
         urlImagen?: string;
         idCategoria: number;
         fechaCreacion: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ofertaFlash?: any;
       }
 
       const productsData = (data || []) as BackendProduct[];
@@ -60,6 +62,12 @@ export class MyStoreTabComponent {
             p.urlImagen ||
             'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=200',
           idCategoria: p.idCategoria,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          flashSalePercentage: (p.ofertaFlash as any)?.porcentajeDescuento,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          flashSaleStartDate: (p.ofertaFlash as any)?.fechaInicio,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          flashSaleEndDate: (p.ofertaFlash as any)?.fechaFin,
         };
       });
 

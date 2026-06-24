@@ -58,6 +58,8 @@ export interface Product {
   rating: number;
   reviewCount: number;
   imageUrl?: string;
+  flashSaleActive?: boolean;
+  flashSaleEndDate?: string;
 }
 
 export type Category = string;

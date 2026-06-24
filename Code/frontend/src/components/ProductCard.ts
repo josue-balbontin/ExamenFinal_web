@@ -9,6 +9,7 @@ export interface ProductCardProps {
 export class ProductCardComponent {
   private props: ProductCardProps;
   private root: HTMLElement;
+  private timerInterval?: number;
 
   constructor(props: ProductCardProps) {
     this.props = props;
@@ -59,6 +60,34 @@ export class ProductCardComponent {
       `;
     }
 
+    if (product.flashSaleActive && product.flashSaleEndDate) {
+      const timerBadge = document.createElement('div');
+      timerBadge.className = 'product-card__flash-timer';
+      imgWrapper.appendChild(timerBadge);
+
+      const updateTimer = () => {
+        const now = new Date().getTime();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const end = new Date(product.flashSaleEndDate!).getTime();
+        const diff = end - now;
+
+        if (diff <= 0) {
+          timerBadge.style.display = 'none';
+          if (this.timerInterval) clearInterval(this.timerInterval);
+          return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        timerBadge.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      };
+
+      updateTimer();
+      this.timerInterval = window.setInterval(updateTimer, 1000);
+    }
+
     // Body
     const body = document.createElement('div');
     body.className = 'product-card__body';
@@ -92,7 +121,7 @@ export class ProductCardComponent {
     priceEl.className = 'product-card__price';
     priceEl.textContent = `$${product.price.toFixed(2)}`;
     priceWrapper.appendChild(priceEl);
-    if (product.originalPrice) {
+    if (product.originalPrice && product.originalPrice !== product.price) {
       const originalEl = document.createElement('span');
       originalEl.className = 'product-card__original-price';
       originalEl.textContent = `$${product.originalPrice.toFixed(2)}`;
