@@ -1,4 +1,4 @@
-export type StockStatus = 'in-stock' | 'low' | 'out-of-stock';
+export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
 
 export interface StoreProduct {
   id: string;

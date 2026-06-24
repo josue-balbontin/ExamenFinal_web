@@ -1,4 +1,4 @@
-import type { CartItem } from './cart.js';
+// Cart items definition moved below
 
 export interface User {
   id?: string;
@@ -68,7 +68,19 @@ export type Route =
   | '/dashboard'
   | '/home'
   | '/product'
-  | '/profile';
+  | '/profile'
+  | '/checkout';
+
+export interface CartItem {
+  idProducto: number;
+  nombreProducto: string;
+  urlImagen?: string;
+  precioUnitario: number;
+  cantidad: number;
+  subtotal: number;
+  idVendedor: number;
+  nombreVendedor: string;
+}
 
 export interface AppState {
   auth: AuthState;

@@ -56,6 +56,9 @@ public class AuthControlador : ControllerBase
 
         try
         {
+            Console.WriteLine($"[LOGIN] Email='{request.Email}' PasswordLength={request.Password?.Length} Password='{request.Password}'");
+            request.Email = request.Email?.Trim();
+            request.Password = request.Password?.Trim();
             var response = await _authServicio.LoginAsync(request);
             return Ok(response);
         }

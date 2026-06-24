@@ -162,6 +162,12 @@
   border-color: var(--color-error);
 }
 
+.edit-profile-modal__textarea {
+  font-family: inherit;
+  min-height: 80px;
+  resize: vertical;
+}
+
 .edit-profile-modal__field-error {
   color: var(--color-error);
   font-size: 0.75rem;

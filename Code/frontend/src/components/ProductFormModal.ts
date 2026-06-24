@@ -309,7 +309,8 @@ export class ProductFormModalComponent {
 
       select.innerHTML =
         '<option value="" disabled>Selecciona una categoría</option>';
-      categorias.forEach(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (categorias as any[]).forEach(
         (c: { idCategoria?: number; nombre?: string | null }) => {
           if (c.idCategoria && c.nombre) {
             const option = document.createElement('option');

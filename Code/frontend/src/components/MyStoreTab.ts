@@ -1,6 +1,7 @@
 import type { StoreProduct, StockStatus } from '../types/store-product.js';
 import { getStockLabel, getStockBarWidth } from '../utils/store-products.js';
 import { ProductFormModalComponent } from './ProductFormModal.js';
+import { api } from '../utils/api.js';
 import { SellerRequestModalComponent } from './SellerRequestModal.js';
 import { ButtonComponent } from './Button.js';
 
@@ -44,9 +45,9 @@ export class MyStoreTabComponent {
       );
 
       this.products = sorted.map((p) => {
-        let stockStatus: StockStatus = 'in-stock';
-        if (p.stock === 0) stockStatus = 'out-of-stock';
-        else if (p.stock < 5) stockStatus = 'low-stock';
+        let stockStatus: StockStatus = 'in_stock';
+        if (p.stock === 0) stockStatus = 'out_of_stock';
+        else if (p.stock <= 5) stockStatus = 'low_stock';
 
         return {
           id: String(p.idProducto),
@@ -221,8 +222,8 @@ export class MyStoreTabComponent {
     actionsCell.setAttribute('role', 'cell');
 
     const editBtn = document.createElement('button');
-    editBtn.className = `my-store__edit-btn${product.status === 'out-of-stock' ? ' my-store__edit-btn--disabled' : ''}`;
-    editBtn.disabled = product.status === 'out-of-stock';
+    editBtn.className = `my-store__edit-btn${product.status === 'out_of_stock' ? ' my-store__edit-btn--disabled' : ''}`;
+    editBtn.disabled = product.status === 'out_of_stock';
     editBtn.setAttribute('aria-label', `Editar ${product.name}`);
     editBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -232,7 +233,7 @@ export class MyStoreTabComponent {
       Editar
     `;
     editBtn.addEventListener('click', () => {
-      if (product.status !== 'out-of-stock') {
+      if (product.status !== 'out_of_stock') {
         const modal = new ProductFormModalComponent(() => {
           this.loadProducts();
         }, product);

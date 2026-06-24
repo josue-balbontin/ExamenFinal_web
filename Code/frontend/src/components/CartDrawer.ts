@@ -1,14 +1,17 @@
-import type { AppState } from '../types/index.js';
-import type { CartItem } from '../types/cart.js';
+import type { AppState, CartItem } from '../types/index.js';
 import type { Store } from '../utils/store.js';
+import type { Router } from '../utils/router.js';
+import { addToCart, removeFromCart } from '../utils/cartServices.js';
 
 export class CartDrawerComponent {
   private store: Store<AppState>;
+  private router: Router;
   private root: HTMLElement;
   private unsubs: Array<() => void> = [];
 
-  constructor(store: Store<AppState>) {
+  constructor(store: Store<AppState>, router: Router) {
     this.store = store;
+    this.router = router;
     this.root = this.buildDrawer();
     this.bindStoreUpdates();
   }
@@ -39,7 +42,7 @@ export class CartDrawerComponent {
     title.className = 'cart-drawer__title';
     title.textContent = 'SHOPPING CART';
 
-    const itemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+    const itemCount = cart.reduce((sum, i) => sum + i.cantidad, 0);
     const subtitle = document.createElement('p');
     subtitle.className = 'cart-drawer__subtitle';
     subtitle.textContent = `${itemCount} item${itemCount !== 1 ? 's' : ''}`;
@@ -64,7 +67,27 @@ export class CartDrawerComponent {
     if (cart.length === 0) {
       body.appendChild(this.buildEmpty());
     } else {
-      cart.forEach((item) => body.appendChild(this.buildItem(item)));
+      // Group by seller
+      const grouped: Record<string, CartItem[]> = {};
+      cart.forEach((item) => {
+        const seller = item.nombreVendedor || 'Vendedor Desconocido';
+        if (!grouped[seller]) grouped[seller] = [];
+        grouped[seller].push(item);
+      });
+
+      Object.entries(grouped).forEach(([sellerName, items]) => {
+        const sellerHeader = document.createElement('h3');
+        sellerHeader.className = 'cart-drawer__seller-header';
+        sellerHeader.textContent = `Vendido por: ${sellerName}`;
+        sellerHeader.style.marginTop = '1rem';
+        sellerHeader.style.marginBottom = '0.5rem';
+        sellerHeader.style.fontSize = '0.9rem';
+        sellerHeader.style.color = 'var(--text-secondary)';
+        body.appendChild(sellerHeader);
+
+        items.forEach((item) => body.appendChild(this.buildItem(item)));
+      });
+
       body.appendChild(this.buildFooter(cart));
     }
 
@@ -105,8 +128,8 @@ export class CartDrawerComponent {
     // Image placeholder
     const img = document.createElement('div');
     img.className = 'cart-drawer__item-img';
-    if (item.product.imageUrl) {
-      img.innerHTML = `<img src="${item.product.imageUrl}" alt="${item.product.name}" loading="lazy"/>`;
+    if (item.urlImagen) {
+      img.innerHTML = `<img src="${item.urlImagen}" alt="${item.nombreProducto}" loading="lazy"/>`;
     } else {
       img.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 45" aria-hidden="true"><rect width="60" height="45" fill="#d1d5db"/><rect x="10" y="5" width="40" height="28" rx="5" fill="#b0b0b0"/><circle cx="22" cy="16" r="6" fill="#d1d5db"/><path d="M10 33 L22 20 L32 27 L40 20 L50 33Z" fill="#c0c0c0"/></svg>`;
     }
@@ -117,11 +140,11 @@ export class CartDrawerComponent {
 
     const name = document.createElement('p');
     name.className = 'cart-drawer__item-name';
-    name.textContent = item.product.name;
+    name.textContent = item.nombreProducto;
 
     const price = document.createElement('p');
     price.className = 'cart-drawer__item-price';
-    price.textContent = `$${(item.product.price * item.quantity).toFixed(2)}`;
+    price.textContent = `$${item.subtotal.toFixed(2)}`;
 
     // Quantity controls
     const controls = document.createElement('div');
@@ -131,26 +154,26 @@ export class CartDrawerComponent {
     decBtn.className = 'cart-drawer__qty-btn';
     decBtn.setAttribute('aria-label', 'Disminuir cantidad');
     decBtn.textContent = '−';
-    decBtn.addEventListener('click', () => this.updateQty(item.product.id, -1));
+    decBtn.addEventListener('click', () => this.updateQty(item.idProducto, -1));
 
     const qtyDisplay = document.createElement('span');
     qtyDisplay.className = 'cart-drawer__qty-display';
-    qtyDisplay.textContent = String(item.quantity);
+    qtyDisplay.textContent = String(item.cantidad);
 
     const incBtn = document.createElement('button');
     incBtn.className = 'cart-drawer__qty-btn';
     incBtn.setAttribute('aria-label', 'Aumentar cantidad');
     incBtn.textContent = '+';
-    incBtn.addEventListener('click', () => this.updateQty(item.product.id, 1));
+    incBtn.addEventListener('click', () => this.updateQty(item.idProducto, 1));
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'cart-drawer__remove-btn';
     removeBtn.setAttribute(
       'aria-label',
-      `Eliminar ${item.product.name} del carrito`
+      `Eliminar ${item.nombreProducto} del carrito`
     );
     removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-    removeBtn.addEventListener('click', () => this.removeItem(item.product.id));
+    removeBtn.addEventListener('click', () => this.removeItem(item.idProducto));
 
     controls.appendChild(decBtn);
     controls.appendChild(qtyDisplay);
@@ -171,40 +194,45 @@ export class CartDrawerComponent {
     const footer = document.createElement('div');
     footer.className = 'cart-drawer__footer';
 
-    const total = cart.reduce(
-      (sum, i) => sum + i.product.price * i.quantity,
-      0
-    );
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
     const totalRow = document.createElement('div');
     totalRow.className = 'cart-drawer__total-row';
-    totalRow.innerHTML = `<span>Total</span><span>$${total.toFixed(2)}</span>`;
+    totalRow.innerHTML = `<span>Total</span><span>$${subtotal.toFixed(2)}</span>`;
 
-    const checkoutBtn = document.createElement('button');
+    const checkoutBtn = document.createElement('a');
     checkoutBtn.className = 'cart-drawer__checkout-btn';
     checkoutBtn.textContent = 'Ir al checkout';
+    checkoutBtn.href = '/checkout';
+    checkoutBtn.style.display = 'block';
+    checkoutBtn.style.textAlign = 'center';
+    checkoutBtn.style.textDecoration = 'none';
+
+    checkoutBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        console.log('Checkout button clicked');
+        this.store.setState({ cartOpen: false });
+        await this.router.navigate('/checkout');
+      } catch (err: unknown) {
+        console.error('Error in checkout navigation:', err);
+        alert(
+          'Error de navegación: ' + ((err as Error).message || String(err))
+        );
+      }
+    });
 
     footer.appendChild(totalRow);
     footer.appendChild(checkoutBtn);
     return footer;
   }
 
-  private updateQty(productId: string, delta: number): void {
-    const cart = this.store
-      .getState()
-      .cart.map((item) => {
-        if (item.product.id !== productId) return item;
-        return { ...item, quantity: item.quantity + delta };
-      })
-      .filter((item) => item.quantity > 0);
-    this.store.setState({ cart });
+  private updateQty(productId: number, delta: number): void {
+    addToCart(this.store, productId, delta);
   }
 
-  private removeItem(productId: string): void {
-    const cart = this.store
-      .getState()
-      .cart.filter((item) => item.product.id !== productId);
-    this.store.setState({ cart });
+  private removeItem(productId: number): void {
+    removeFromCart(this.store, productId);
   }
 
   private rebuildDrawer(): void {

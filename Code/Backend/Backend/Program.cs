@@ -131,6 +131,7 @@ builder.Services.AddScoped<Backend.Servicios.Auth.IAuthServicio, Backend.Servici
 builder.Services.AddScoped<IEmailServicio, EmailServicio>();
 builder.Services.AddScoped<INotificacionServicio, NotificacionServicio>();
 builder.Services.AddScoped<IPedidoServicio, PedidoServicio>();
+builder.Services.AddScoped<Backend.Servicios.Carrito.ICarritoServicio, Backend.Servicios.Carrito.CarritoServicio>();
 
 // Registrar DataSeeder
 builder.Services.AddTransient<DataSeeder>();

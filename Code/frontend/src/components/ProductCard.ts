@@ -1,9 +1,8 @@
 import type { Product } from '../types/index.js';
-import type { CartItem } from '../types/cart.js';
 
 export interface ProductCardProps {
   product: Product;
-  onAddToCart: (item: CartItem) => void;
+  onAddToCart: (productId: number, quantity: number) => void;
   onCardClick?: (product: Product) => void;
 }
 
@@ -105,7 +104,7 @@ export class ProductCardComponent {
     addBtn.className = 'product-card__add-btn';
     addBtn.innerHTML = `<span aria-hidden="true">+</span> Añadir al carrito`;
     addBtn.addEventListener('click', () =>
-      this.props.onAddToCart({ product, quantity: 1 })
+      this.props.onAddToCart(parseInt(product.id, 10), 1)
     );
 
     body.appendChild(category);

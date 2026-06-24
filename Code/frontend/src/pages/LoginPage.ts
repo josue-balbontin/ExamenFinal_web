@@ -3,6 +3,7 @@ import { loginService } from '../utils/auth.js';
 import type { AppState } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
+import { fetchCart } from '../utils/cartServices.js';
 
 export function createLoginPage(
   store: Store<AppState>,
@@ -20,6 +21,7 @@ export function createLoginPage(
       store.setState({
         auth: { isAuthenticated: true, user, loading: false, error: null },
       });
+      await fetchCart(store);
       router.navigate('/home');
     },
     onForgotPassword: () => {

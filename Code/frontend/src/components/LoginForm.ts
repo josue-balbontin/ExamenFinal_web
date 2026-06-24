@@ -115,7 +115,7 @@ export class LoginFormComponent {
 
   private async handleSubmit(): Promise<void> {
     const data: LoginFormData = {
-      email: this.emailInput.getValue(),
+      email: this.emailInput.getValue().trim(),
       password: this.passwordInput.getValue(),
     };
 

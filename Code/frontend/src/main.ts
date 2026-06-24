@@ -6,8 +6,10 @@ import { createRegisterPage } from './pages/RegisterPage.ts';
 import { createHomePage } from './pages/HomePage.ts';
 import { createProductDetailPage } from './pages/ProductDetailPage.ts';
 import type { AppState } from './types/index.ts';
-import { MAX_PRICE_DEFAULT } from './utils/products.ts';
-import { createProfilePage } from './pages/ProfilePage.ts';
+import { MAX_PRICE_DEFAULT } from './utils/products.js';
+import { createProfilePage } from './pages/ProfilePage.js';
+import { createCheckoutPage } from './pages/CheckoutPage.js';
+import { fetchCart } from './utils/cartServices.js';
 
 const initialState: AppState = {
   auth: {
@@ -37,6 +39,7 @@ router
   .register('/dashboard', () => createDashboardPage(store, router))
   .register('/home', () => createHomePage(store, router))
   .register('/profile', () => createProfilePage(store, router))
+  .register('/checkout', () => createCheckoutPage(store, router))
   .register('/product', () => {
     const id = window.location.pathname.split('/').pop() ?? '1';
     return createProductDetailPage(store, router, id);
@@ -45,5 +48,12 @@ router
   .onChange((route) => {
     store.setState({ currentRoute: route });
   });
+
+// Check if authenticated on initial load, fetch cart if true
+if (store.getState().auth.isAuthenticated) {
+  fetchCart(store).catch((err) =>
+    console.error('Error fetching cart on init:', err)
+  );
+}
 
 router.init();

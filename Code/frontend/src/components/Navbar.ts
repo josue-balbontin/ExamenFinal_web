@@ -75,7 +75,7 @@ export class NavbarComponent {
     // Cart button
     const cartCount = this.store
       .getState()
-      .cart.reduce((sum, i) => sum + i.quantity, 0);
+      .cart.reduce((sum, i) => sum + i.cantidad, 0);
     const cartBtn = document.createElement('button');
     cartBtn.className = 'navbar__icon-btn';
     cartBtn.setAttribute('aria-label', `Carrito, ${cartCount} productos`);

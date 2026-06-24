@@ -1,9 +1,10 @@
-import type { AppState, Product, Route } from '../types/index.js';
+import type { AppState, Route } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
 import { NavbarComponent } from '../components/Navbar.js';
 import { StarRatingComponent } from '../components/StarRating.js';
 import { CartDrawerComponent } from '../components/CartDrawer.js';
+import { addToCart } from '../utils/cartServices.js';
 import {
   fetchProductDetail,
   getRatingDistribution,
@@ -118,27 +119,7 @@ export async function createProductDetailPage(
   addBtn.className = 'detail-page__add-btn';
   addBtn.innerHTML = `<span aria-hidden="true">+</span> AÑADIR AL CARRITO`;
   addBtn.addEventListener('click', () => {
-    const product: Product = {
-      id: detail.id,
-      name: detail.name,
-      category: detail.category,
-      seller: detail.seller,
-      price: detail.price,
-      originalPrice: detail.originalPrice,
-      rating: detail.rating,
-      reviewCount: detail.reviewCount,
-    };
-    const cart = [...store.getState().cart];
-    const existing = cart.find((i) => i.product.id === product.id);
-    if (existing) {
-      existing.quantity += 1;
-      store.setState({ cart: [...cart], cartOpen: true });
-    } else {
-      store.setState({
-        cart: [...cart, { product, quantity: 1 }],
-        cartOpen: true,
-      });
-    }
+    addToCart(store, parseInt(detail.id, 10), 1);
   });
 
   infoPanel.appendChild(category);
@@ -336,7 +317,7 @@ export async function createProductDetailPage(
   content.appendChild(bottomSection);
   page.appendChild(content);
 
-  const cartDrawer = new CartDrawerComponent(store);
+  const cartDrawer = new CartDrawerComponent(store, router);
   page.appendChild(cartDrawer.getElement());
 
   return page;

@@ -45,7 +45,7 @@ export function createHomePage(
   layout.appendChild(main);
   page.appendChild(layout);
 
-  const cartDrawer = new CartDrawerComponent(store);
+  const cartDrawer = new CartDrawerComponent(store, router);
   page.appendChild(cartDrawer.getElement());
 
   return page;

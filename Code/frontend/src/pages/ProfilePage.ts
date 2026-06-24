@@ -154,7 +154,7 @@ export function createProfilePage(
   content.appendChild(tabPanelWrapper);
 
   page.appendChild(content);
-  page.appendChild(new CartDrawerComponent(store).getElement());
+  page.appendChild(new CartDrawerComponent(store, router).getElement());
 
   return page;
 }

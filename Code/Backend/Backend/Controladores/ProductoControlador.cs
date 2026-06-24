@@ -48,7 +48,7 @@ public class ProductoControlador : ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}", Name = nameof(ObtenerProductoPorId))]
     [ProducesResponseType(typeof(ProductoResponseDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObtenerProductoPorId(int id)
     {

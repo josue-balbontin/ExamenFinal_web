@@ -4,6 +4,7 @@ import type { Router } from '../utils/router.js';
 import type { Route } from '../types/index.js';
 import { ProductCardComponent } from './ProductCard.js';
 import { fetchProducts } from '../utils/products.js';
+import { addToCart } from '../utils/cartServices.js';
 
 export class ProductGridComponent {
   private store: Store<AppState>;
@@ -66,15 +67,8 @@ export class ProductGridComponent {
     this.currentProducts.forEach((product) => {
       const card = new ProductCardComponent({
         product,
-        onAddToCart: (item) => {
-          const cart = [...this.store.getState().cart];
-          const existing = cart.find((i) => i.product.id === item.product.id);
-          if (existing) {
-            existing.quantity += item.quantity;
-            this.store.setState({ cart: [...cart] });
-          } else {
-            this.store.setState({ cart: [...cart, item] });
-          }
+        onAddToCart: (productId, quantity) => {
+          addToCart(this.store, productId, quantity);
         },
         onCardClick: (p) => {
           this.router.navigate(`/product/${p.id}` as Route);

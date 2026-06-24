@@ -12,10 +12,12 @@ namespace Backend.Servicios.Pedido;
 public class PedidoServicio : IPedidoServicio
 {
     private readonly MarketplaceDbContext _dbContext;
+    private readonly RedisContext _redisContext;
 
-    public PedidoServicio(MarketplaceDbContext dbContext)
+    public PedidoServicio(MarketplaceDbContext dbContext, RedisContext redisContext)
     {
         _dbContext = dbContext;
+        _redisContext = redisContext;
     }
 
     public async Task<Modelos.Entidades.Pedido> CrearPedidoAsync(int idCliente, CrearPedidoRequestDto request)
@@ -86,6 +88,9 @@ public class PedidoServicio : IPedidoServicio
 
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            // Vaciar el carrito en Redis
+            await _redisContext.Database.KeyDeleteAsync($"carrito:usuario:{idCliente}");
 
             return nuevoPedido;
         }
