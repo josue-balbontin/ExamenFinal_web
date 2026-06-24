@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/currency.js';
 import type { AppState } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
@@ -509,9 +510,7 @@ function buildConfirmStep(
       String(cart.reduce((s, i) => s + i.cantidad, 0))
     )
   );
-  summaryBox.appendChild(
-    buildConfirmRow('Total', `$${total.toFixed(2)}`, true)
-  );
+  summaryBox.appendChild(buildConfirmRow('Total', formatPrice(total), true));
 
   const termsNote = document.createElement('p');
   termsNote.className = 'checkout-confirm__terms';
@@ -524,7 +523,7 @@ function buildConfirmStep(
 
   const payBtn = document.createElement('button');
   payBtn.className = 'checkout-step__btn';
-  payBtn.textContent = `Pagar $${total.toFixed(2)}`;
+  payBtn.textContent = `Pagar ${formatPrice(total)}`;
   payBtn.addEventListener('click', async () => {
     payBtn.disabled = true;
     payBtn.textContent = 'Procesando…';
@@ -568,7 +567,7 @@ function buildConfirmStep(
       inlineError.textContent =
         (err as Error).message || 'Ocurrió un error al procesar el pago.';
       payBtn.disabled = false;
-      payBtn.textContent = `Pagar $${total.toFixed(2)}`;
+      payBtn.textContent = `Pagar ${formatPrice(total)}`;
     }
   });
 
@@ -603,7 +602,7 @@ function buildOrderSummary(store: Store<AppState>): HTMLElement {
     li.className = 'checkout-summary__item';
     li.innerHTML = `
       <span class="checkout-summary__item-name">${item.nombreProducto} <span class="checkout-summary__item-qty">×${item.cantidad}</span></span>
-      <span class="checkout-summary__item-price">$${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+      <span class="checkout-summary__item-price">${formatPrice(item.precioUnitario * item.cantidad)}</span>
     `;
     itemsList.appendChild(li);
   });
@@ -611,12 +610,12 @@ function buildOrderSummary(store: Store<AppState>): HTMLElement {
   const divider = document.createElement('div');
   divider.className = 'checkout-summary__divider';
 
-  const subtotalRow = buildSummaryRow('Subtotal', `$${subtotal.toFixed(2)}`);
+  const subtotalRow = buildSummaryRow('Subtotal', formatPrice(subtotal));
   const shippingRow = buildSummaryRow(
     'Envío',
-    shipping > 0 ? `$${shipping.toFixed(2)}` : 'Gratis'
+    shipping > 0 ? formatPrice(shipping) : 'Gratis'
   );
-  const totalRow = buildSummaryRow('Total', `$${total.toFixed(2)}`, true);
+  const totalRow = buildSummaryRow('Total', formatPrice(total), true);
 
   box.appendChild(title);
   box.appendChild(itemsList);

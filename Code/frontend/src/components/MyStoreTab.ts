@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/currency.js';
 import type { StoreProduct, StockStatus } from '../types/store-product.js';
 import { getStockLabel, getStockBarWidth } from '../utils/store-products.js';
 import { ProductFormModalComponent } from './ProductFormModal.js';
@@ -206,7 +207,7 @@ export class MyStoreTabComponent {
     const priceCell = document.createElement('div');
     priceCell.className = 'my-store__td my-store__td--price';
     priceCell.setAttribute('role', 'cell');
-    priceCell.textContent = `$${product.price.toFixed(2)}`;
+    priceCell.textContent = formatPrice(product.price);
 
     // Stock cell
     const stockCell = document.createElement('div');

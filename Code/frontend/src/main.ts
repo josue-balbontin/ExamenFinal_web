@@ -12,11 +12,14 @@ import { createCheckoutPage } from './pages/CheckoutPage.js';
 import { fetchCart } from './utils/cartServices.js';
 import { createForgotPasswordPage } from './pages/ForgotPasswordPage.js';
 import { createResetPasswordPage } from './pages/ResetPasswordPage.js';
+import { restoreSession } from './utils/auth.js';
+
+const restoredUser = restoreSession();
 
 const initialState: AppState = {
   auth: {
-    isAuthenticated: false,
-    user: null,
+    isAuthenticated: !!restoredUser,
+    user: restoredUser,
     loading: false,
     error: null,
   },

@@ -1,4 +1,5 @@
 import type { Product } from '../types/index.js';
+import { formatPrice } from '../utils/currency.js';
 
 export interface ProductCardProps {
   product: Product;
@@ -119,12 +120,12 @@ export class ProductCardComponent {
     priceWrapper.className = 'product-card__price-row';
     const priceEl = document.createElement('span');
     priceEl.className = 'product-card__price';
-    priceEl.textContent = `$${product.price.toFixed(2)}`;
+    priceEl.textContent = formatPrice(product.price);
     priceWrapper.appendChild(priceEl);
     if (product.originalPrice && product.originalPrice !== product.price) {
       const originalEl = document.createElement('span');
       originalEl.className = 'product-card__original-price';
-      originalEl.textContent = `$${product.originalPrice.toFixed(2)}`;
+      originalEl.textContent = formatPrice(product.originalPrice);
       priceWrapper.appendChild(originalEl);
     }
 

@@ -66,6 +66,48 @@ export async function logoutService(): Promise<void> {
   localStorage.removeItem('token');
 }
 
+export function restoreSession(): User | null {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  try {
+    const payloadBase64 = token.split('.')[1];
+    // Reemplazar caracteres Base64Url a Base64 estándar
+    const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    const decodedJson = atob(base64);
+    const decoded = JSON.parse(decodedJson);
+
+    // Verificar si el token ha expirado
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      localStorage.removeItem('token');
+      return null;
+    }
+
+    const id =
+      decoded[
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+      ] || decoded.sub;
+    const email =
+      decoded[
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+      ] || decoded.email;
+    const name =
+      decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+      'Usuario';
+
+    return {
+      id: id ? String(id) : undefined,
+      email: email || '',
+      name: name,
+      lastName: '',
+    };
+  } catch (e) {
+    console.error('Error al decodificar el token:', e);
+    localStorage.removeItem('token');
+    return null;
+  }
+}
+
 export async function forgotPasswordService(
   email: string
 ): Promise<string | null> {

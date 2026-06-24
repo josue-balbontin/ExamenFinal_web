@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/currency.js';
 import type { AppState } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
@@ -99,12 +100,12 @@ export async function createProductDetailPage(
   priceRow.className = 'detail-page__price-row';
   const priceEl = document.createElement('span');
   priceEl.className = 'detail-page__price';
-  priceEl.textContent = `$${detail.price.toFixed(2)}`;
+  priceEl.textContent = formatPrice(detail.price);
   priceRow.appendChild(priceEl);
-  if (detail.originalPrice) {
+  if (detail.originalPrice && detail.originalPrice !== detail.price) {
     const origEl = document.createElement('span');
     origEl.className = 'detail-page__original-price';
-    origEl.textContent = `$${detail.originalPrice.toFixed(2)}`;
+    origEl.textContent = formatPrice(detail.originalPrice);
     priceRow.appendChild(origEl);
   }
 

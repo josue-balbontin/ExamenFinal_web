@@ -26,12 +26,22 @@ export class Router {
   async navigate(route: Route, pushState = true): Promise<void> {
     const handler =
       this.routes.get(route as Route) ??
-      [...this.routes.entries()].find(([key]) =>
-        (route as string).startsWith(key)
+      [...this.routes.entries()].find(
+        ([key]) =>
+          key === '/product' && (route as string).startsWith('/product/')
       )?.[1];
 
     if (!handler) {
       console.warn(`[Router] No handler for route: ${route}`);
+      import('../components/StatusModal.js').then(({ showStatusModal }) => {
+        showStatusModal({
+          title: 'Error 404',
+          message: 'La ruta a la que intentas acceder no existe.',
+          type: 'error',
+        });
+      });
+      // Fallback seguro a home (home decidirá si enviarlo a login si no está auth)
+      this.navigate('/home' as Route, false);
       return;
     }
 
@@ -53,13 +63,7 @@ export class Router {
 
   init(): void {
     const path = window.location.pathname as Route;
-    const hasMatch =
-      this.routes.has(path) ||
-      [...this.routes.keys()].some(
-        (k) => (path as string).startsWith(k) && k !== '/'
-      );
-    const route: Route = hasMatch ? path : '/login';
-    this.navigate(route, false);
+    this.navigate(path, false);
   }
 
   getCurrent(): Route {

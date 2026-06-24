@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/currency.js';
 import type { AppState, CartItem } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
@@ -142,9 +143,9 @@ export class CartDrawerComponent {
     name.className = 'cart-drawer__item-name';
     name.textContent = item.nombreProducto;
 
-    const price = document.createElement('p');
+    const price = document.createElement('span');
     price.className = 'cart-drawer__item-price';
-    price.textContent = `$${item.subtotal.toFixed(2)}`;
+    price.textContent = formatPrice(item.subtotal);
 
     // Quantity controls
     const controls = document.createElement('div');
@@ -198,7 +199,7 @@ export class CartDrawerComponent {
 
     const totalRow = document.createElement('div');
     totalRow.className = 'cart-drawer__total-row';
-    totalRow.innerHTML = `<span>Total</span><span>$${subtotal.toFixed(2)}</span>`;
+    totalRow.innerHTML = `<span>Total</span><span>${formatPrice(subtotal)}</span>`;
 
     const checkoutBtn = document.createElement('a');
     checkoutBtn.className = 'cart-drawer__checkout-btn';
