@@ -11,7 +11,6 @@ Toda la organización, asignación de tareas y tablero **Kanban** se encuentran 
 
 - **Multivendedor:** Los compradores pueden armar carritos con productos de diferentes proveedores.
 - **Escalabilidad de Cuentas:** Cualquier cliente puede enviar una solicitud para convertirse en vendedor dentro de la plataforma.
-- **Sistema de Comisiones:** Los vendedores pagan un porcentaje de comisión por utilizar la plataforma y vender sus productos.
 - **Lógica Avanzada (Precios Dinámicos):** 
   - **Variación por IP:** Precios adaptables dependiendo de la geolocalización o IP del cliente.
   - **Ofertas Flash:** Descuentos y ofertas de tiempo limitado gestionadas por el sistema.
@@ -21,11 +20,11 @@ Toda la organización, asignación de tareas y tablero **Kanban** se encuentran 
 El sistema cuenta con una arquitectura de accesos bien segmentada:
 
 1. **Cliente:** Puede navegar, comparar, añadir al carrito y efectuar compras.
-2. **Vendedor:** Administra su propio catálogo de productos, visualiza sus ventas y maneja sus pagos de comisiones.
+2. **Vendedor:** Administra su propio catálogo de productos, visualiza sus ventas 
 3. **Administrador:** Dividido en 3 enfoques clave para escalar la carga administrativa:
    - **Full Admin:** Acceso y control total de la plataforma.
    - **Recursos Humanos:** Encargado de analizar y aprobar o rechazar las solicitudes de clientes que desean ser vendedores.
-   - **Control de Stock:** Analiza, supervisa y evalúa el stock y flujo de los productos ofertados en la plataforma.
+
 
 ##  Diseño y Prototipado
 1. El diseño de la interfaz de usuario se encuentra plasmado en Figma:
@@ -34,6 +33,43 @@ El sistema cuenta con una arquitectura de accesos bien segmentada:
 
     ![Diagrama de Base de Datos](./images/Database.png)
 
+3. Modelo C4 
+    * Diagrama de contexto C1
+
+      ![Diagrama de contexto C1](./images/c1.png)
+
+    * Diagrama de contenedores C2
+
+      ![Diagrama de contenedores C2](./images/c2.png)
+    
+    * Diagrama de componentes C3
+
+      ![Diagrama de componentes C3](./images/c3.png)
+
+4. Diagramas UML
+
+    * Diagrama de Secuencia 1: Compra de producto 
+      Flujo donde un cliente realiza un pedido de su carrito.
+    
+      ![Diagrama de Secuencia 1](./images/secuencia1.png)
+      
+    * Diagrama de Secuencia 2: Solicitud de Vendedor
+      Flujo donde Recursos Humanos usa el panel de Django para aprobar a un usuario como Vendedor.
+
+      ![Diagrama de Secuencia 2](./images/secuencia2.png)
+
+    * Diagrama de Actividad: Login
+
+      ![Diagrama de Actividad: Login](./images/login.png)
+
+    * Diagrama de Estados: Solicitud de Vendedor
+
+      ![Diagrama de Estados: Solicitud de Vendedor](./images/estadosvendedor.png)
+
+5. Diagrama de despliegue 
+
+      ![Diagrama de despliegue](./images/despligue.png)
+
 
 ##  Stack Tecnológico
 
@@ -41,7 +77,7 @@ El proyecto está diseñado cumpliendo con las rúbricas de evaluación combinan
 
 ### Frontend
 - **Nativo:** Web Components utilizando **TypeScript**.
-- **Framework:** **Angular**.
+- **Framework:** **React**.
 
 ### Backend
 - **Core de la Plataforma (Clientes/Vendedores):** **C#** con **Entity Framework** para un manejo sólido de transacciones permite un despliegue rapido al ser compilado, robustes y tipo de datos tipados y control de errores ademas de librerias nativas de apoyo que implementa .
