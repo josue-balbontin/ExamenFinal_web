@@ -15,4 +15,22 @@ public class ProductoResponseDto
     public string NombreVendedor { get; set; } = string.Empty;
     public double Estrellas { get; set; }
     public int CantidadReviews { get; set; }
+    
+    // Nueva información adicional para el panel y catálogo
+    public OfertaFlashResponseDto? OfertaFlash { get; set; }
+    public List<PrecioGeoResponseDto>? PreciosGeolocalizados { get; set; }
+}
+
+public class OfertaFlashResponseDto
+{
+    public double PorcentajeDescuento { get; set; }
+    public System.DateTime FechaInicio { get; set; }
+    public System.DateTime FechaFin { get; set; }
+    public bool EstaActiva { get; set; }
+}
+
+public class PrecioGeoResponseDto
+{
+    public string CodigoPais { get; set; } = string.Empty;
+    public double Multiplicador { get; set; }
 }

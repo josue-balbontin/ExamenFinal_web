@@ -553,11 +553,38 @@ public class ProductoServicio : IProductoServicio
         }
 
         double descuento = 0;
-        var oferta = p.OfertasFlashes?.FirstOrDefault();
+        var ahora = DateTime.Now;
+        var oferta = p.OfertasFlashes?.FirstOrDefault(o => !o.EstadoEliminado);
+        
+        OfertaFlashResponseDto? ofertaFlashDto = null;
         if (oferta != null)
         {
-            descuento = oferta.PorcentajeDescuento;
-            precioAplicado = precioAplicado - (precioAplicado * (descuento / 100.0));
+            bool estaActiva = (oferta.FechaInicio <= ahora && oferta.FechaFin >= ahora);
+            ofertaFlashDto = new OfertaFlashResponseDto
+            {
+                PorcentajeDescuento = oferta.PorcentajeDescuento,
+                FechaInicio = oferta.FechaInicio,
+                FechaFin = oferta.FechaFin,
+                EstaActiva = estaActiva
+            };
+
+            if (estaActiva)
+            {
+                descuento = oferta.PorcentajeDescuento;
+                precioAplicado = precioAplicado - (precioAplicado * (descuento / 100.0));
+            }
+        }
+
+        List<PrecioGeoResponseDto>? preciosGeoDto = null;
+        if (p.PreciosGeolocalizados != null && p.PreciosGeolocalizados.Any(pg => !pg.EstadoEliminado))
+        {
+            preciosGeoDto = p.PreciosGeolocalizados
+                .Where(pg => !pg.EstadoEliminado)
+                .Select(pg => new PrecioGeoResponseDto
+                {
+                    CodigoPais = pg.CodigoPais,
+                    Multiplicador = pg.Multiplicador
+                }).ToList();
         }
 
         return new ProductoResponseDto
@@ -574,7 +601,9 @@ public class ProductoServicio : IProductoServicio
             Categoria = p.IdCategoriaNavigation?.Nombre ?? "",
             NombreVendedor = p.IdVendedorNavigation != null ? $"{p.IdVendedorNavigation.Nombre} {p.IdVendedorNavigation.Apellido}".Trim() : "",
             Estrellas = Math.Round(estrellas, 1),
-            CantidadReviews = cantidadReviews
+            CantidadReviews = cantidadReviews,
+            OfertaFlash = ofertaFlashDto,
+            PreciosGeolocalizados = preciosGeoDto
         };
     }
 
