@@ -481,8 +481,8 @@ public class ProductoServicio : IProductoServicio
         if (ofertaExistente != null)
         {
             ofertaExistente.PorcentajeDescuento = request.PorcentajeDescuento;
-            ofertaExistente.FechaInicio = request.FechaInicio;
-            ofertaExistente.FechaFin = request.FechaFin;
+            ofertaExistente.FechaInicio = DateTime.SpecifyKind(request.FechaInicio, DateTimeKind.Unspecified);
+            ofertaExistente.FechaFin = DateTime.SpecifyKind(request.FechaFin, DateTimeKind.Unspecified);
         }
         else
         {
@@ -490,8 +490,8 @@ public class ProductoServicio : IProductoServicio
             {
                 IdProducto = idProducto,
                 PorcentajeDescuento = request.PorcentajeDescuento,
-                FechaInicio = request.FechaInicio,
-                FechaFin = request.FechaFin,
+                FechaInicio = DateTime.SpecifyKind(request.FechaInicio, DateTimeKind.Unspecified),
+                FechaFin = DateTime.SpecifyKind(request.FechaFin, DateTimeKind.Unspecified),
                 EstadoEliminado = false
             };
             if (producto.OfertasFlashes == null)

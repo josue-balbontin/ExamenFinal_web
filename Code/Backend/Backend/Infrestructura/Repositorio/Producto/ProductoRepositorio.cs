@@ -103,7 +103,10 @@ public class ProductoRepositorio : IProductoRepositorio
 
     public async Task ActualizarProductoAsync(Producto producto)
     {
-        _context.Productos.Update(producto);
+        if (_context.Entry(producto).State == EntityState.Detached)
+        {
+            _context.Productos.Update(producto);
+        }
         await _context.SaveChangesAsync();
     }
 
