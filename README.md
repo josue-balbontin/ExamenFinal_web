@@ -98,6 +98,30 @@ La decisión de utilizar la combinación de C# y Python (Django), y no utilizar 
   Implementar paneles de gestión (control de usuarios, RRHH, reportes de stock) desde cero en C# o Java es muy demandante en tiempo. **Django** proporciona un panel de administración autogenerado (*out-of-the-box*) sumamente robusto. Al usarlo en el backend administrativo, aprovechamos el desarrollo rápido y flexible de Python para las tareas de moderación interna, sin arriesgar el core transaccional del sistema.
 
 
+## Setup y Ejecución Local
+
+Para levantar todo el entorno de desarrollo del monolito modular (bases de datos, backend, panel admin, proxy y frontend), se ha provisto de un entorno orquestado con Docker Compose.
+
+### Prerrequisitos
+- Tener instalado [Docker](https://www.docker.com/) y **Docker Compose**.
+
+### Pasos
+1. Renombra o copia el archivo `Code/.env.example` a `Code/.env.development` y configura las variables de entorno si es necesario. (Por defecto, ya tienen valores configurados para levantar el entorno local).
+2. Abre una terminal y navega hasta la carpeta `Code/`:
+   ```bash
+   cd Code/
+   ```
+3. Ejecuta el siguiente comando para construir y levantar todos los servicios:
+   ```bash
+   docker-compose up --build
+   ```
+4. **Accesos:**
+   - **Frontend:** [http://localhost](http://localhost) (Nginx redirige al build del frontend)
+   - **Backend API (Swagger):** [http://localhost/swagger](http://localhost/swagger) (Redirigido a la API en C#)
+   - **Django Admin:** [http://localhost/admin](http://localhost/admin) (Redirigido al panel administrativo)
+
+Para instrucciones específicas sobre cómo desarrollar en el Frontend localmente, consulta el [README del Frontend](./Code/frontend/README.md).
+
 ## Documentación Adicional
 
 Como parte de los entregables del proyecto se entrega la sgt documentacion :
