@@ -477,12 +477,28 @@ public class ProductoServicio : IProductoServicio
             throw new UnauthorizedAccessException("No tienes permiso para editar este producto.");
         }
 
-        var ofertaExistente = producto.OfertasFlashes?.FirstOrDefault(o => !o.EstadoEliminado);
-        if (ofertaExistente != null)
+        var fechaInicioLocal = request.FechaInicio.ToLocalTime();
+        var fechaFinLocal = request.FechaFin.ToLocalTime();
+
+        var fechaInicioFinal = DateTime.SpecifyKind(fechaInicioLocal, DateTimeKind.Unspecified);
+        var fechaFinFinal = DateTime.SpecifyKind(fechaFinLocal, DateTimeKind.Unspecified);
+
+        var ofertasExistentes = _dbContext.Set<Modelos.Entidades.OfertasFlash>()
+            .Where(o => o.IdProducto == idProducto && !o.EstadoEliminado)
+            .ToList();
+
+        if (ofertasExistentes.Any())
         {
-            ofertaExistente.PorcentajeDescuento = request.PorcentajeDescuento;
-            ofertaExistente.FechaInicio = DateTime.SpecifyKind(request.FechaInicio, DateTimeKind.Unspecified);
-            ofertaExistente.FechaFin = DateTime.SpecifyKind(request.FechaFin, DateTimeKind.Unspecified);
+            var ofertaPrincipal = ofertasExistentes.First();
+            ofertaPrincipal.PorcentajeDescuento = request.PorcentajeDescuento;
+            ofertaPrincipal.FechaInicio = fechaInicioFinal;
+            ofertaPrincipal.FechaFin = fechaFinFinal;
+
+            // Eliminar duplicados si el bug anterior los generó
+            foreach (var extra in ofertasExistentes.Skip(1))
+            {
+                extra.EstadoEliminado = true;
+            }
         }
         else
         {
@@ -490,27 +506,29 @@ public class ProductoServicio : IProductoServicio
             {
                 IdProducto = idProducto,
                 PorcentajeDescuento = request.PorcentajeDescuento,
-                FechaInicio = DateTime.SpecifyKind(request.FechaInicio, DateTimeKind.Unspecified),
-                FechaFin = DateTime.SpecifyKind(request.FechaFin, DateTimeKind.Unspecified),
+                FechaInicio = fechaInicioFinal,
+                FechaFin = fechaFinFinal,
                 EstadoEliminado = false
             };
-            if (producto.OfertasFlashes == null)
+            _dbContext.Set<Modelos.Entidades.OfertasFlash>().Add(nuevaOferta);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        // Limpiar el ChangeTracker y recargar el producto para actualizar Elasticsearch correctamente
+        _dbContext.ChangeTracker.Clear();
+        var productoActualizado = await _repositorio.ObtenerPorId(idProducto);
+
+        if (productoActualizado != null)
+        {
+            try
             {
-                producto.OfertasFlashes = new List<Modelos.Entidades.OfertasFlash>();
+                await _elasticContext.Client.IndexAsync(productoActualizado, i => i.Index("productos").Id(productoActualizado.IdProducto.ToString()));
             }
-            producto.OfertasFlashes.Add(nuevaOferta);
-        }
-
-        await _repositorio.ActualizarProductoAsync(producto);
-
-        // Actualizar Elasticsearch
-        try
-        {
-            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-        }
-        catch
-        {
-            // Falla silenciosa
+            catch
+            {
+                // Falla silenciosa
+            }
         }
 
         // Invalidar caché de Redis
