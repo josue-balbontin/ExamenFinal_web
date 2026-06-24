@@ -293,6 +293,7 @@ public class ProductoServicio : IProductoServicio
         };
 
         await collection.InsertOneAsync(nuevaResena);
+        await InvalidarCacheProductosAsync();
     }
 
     public async Task<List<ProductoResponseDto>> ObtenerMisProductosAsync(int idVendedor)
@@ -344,18 +345,16 @@ public class ProductoServicio : IProductoServicio
 
         var productoCreado = await _repositorio.AgregarProductoAsync(producto);
 
-        // Indexar en Elasticsearch en background para no bloquear
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
-            }
-            catch
-            {
-                // Falla silenciosa
-            }
-        });
+            await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        await InvalidarCacheProductosAsync();
 
         string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
         return MapearA_Dto(productoCreado, region, 0, 0);
@@ -378,18 +377,16 @@ public class ProductoServicio : IProductoServicio
         producto.Stock = request.Stock;
         await _repositorio.ActualizarProductoAsync(producto);
 
-        // Actualizar en Elasticsearch (reindexando el documento completo)
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-            }
-            catch
-            {
-                // Falla silenciosa
-            }
-        });
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        await InvalidarCacheProductosAsync();
     }
 
     public async Task<ProductoResponseDto> EditarProductoAsync(int idVendedor, int idProducto, EditarProductoRequestDto request)
@@ -451,27 +448,16 @@ public class ProductoServicio : IProductoServicio
 
         await _repositorio.ActualizarProductoAsync(producto);
 
-        // Actualizar Elasticsearch e invalidar Redis en background
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-            }
-            catch { }
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
 
-            try
-            {
-                var dbRedis = _redisContext.Database;
-                var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
-                var keys = server.Keys(pattern: "productos:*").ToArray();
-                if (keys.Any())
-                {
-                    await dbRedis.KeyDeleteAsync(keys);
-                }
-            }
-            catch { }
-        });
+        await InvalidarCacheProductosAsync();
 
         string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
         return MapearA_Dto(producto, region, 0, 0);
@@ -491,12 +477,28 @@ public class ProductoServicio : IProductoServicio
             throw new UnauthorizedAccessException("No tienes permiso para editar este producto.");
         }
 
-        var ofertaExistente = producto.OfertasFlashes?.FirstOrDefault(o => !o.EstadoEliminado);
-        if (ofertaExistente != null)
+        var fechaInicioLocal = request.FechaInicio.ToLocalTime();
+        var fechaFinLocal = request.FechaFin.ToLocalTime();
+
+        var fechaInicioFinal = DateTime.SpecifyKind(fechaInicioLocal, DateTimeKind.Unspecified);
+        var fechaFinFinal = DateTime.SpecifyKind(fechaFinLocal, DateTimeKind.Unspecified);
+
+        var ofertasExistentes = _dbContext.Set<Modelos.Entidades.OfertasFlash>()
+            .Where(o => o.IdProducto == idProducto && !o.EstadoEliminado)
+            .ToList();
+
+        if (ofertasExistentes.Any())
         {
-            ofertaExistente.PorcentajeDescuento = request.PorcentajeDescuento;
-            ofertaExistente.FechaInicio = request.FechaInicio;
-            ofertaExistente.FechaFin = request.FechaFin;
+            var ofertaPrincipal = ofertasExistentes.First();
+            ofertaPrincipal.PorcentajeDescuento = request.PorcentajeDescuento;
+            ofertaPrincipal.FechaInicio = fechaInicioFinal;
+            ofertaPrincipal.FechaFin = fechaFinFinal;
+
+            // Eliminar duplicados si el bug anterior los generó
+            foreach (var extra in ofertasExistentes.Skip(1))
+            {
+                extra.EstadoEliminado = true;
+            }
         }
         else
         {
@@ -504,44 +506,33 @@ public class ProductoServicio : IProductoServicio
             {
                 IdProducto = idProducto,
                 PorcentajeDescuento = request.PorcentajeDescuento,
-                FechaInicio = request.FechaInicio,
-                FechaFin = request.FechaFin,
+                FechaInicio = fechaInicioFinal,
+                FechaFin = fechaFinFinal,
                 EstadoEliminado = false
             };
-            if (producto.OfertasFlashes == null)
+            _dbContext.Set<Modelos.Entidades.OfertasFlash>().Add(nuevaOferta);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        // Limpiar el ChangeTracker y recargar el producto para actualizar Elasticsearch correctamente
+        _dbContext.ChangeTracker.Clear();
+        var productoActualizado = await _repositorio.ObtenerPorId(idProducto);
+
+        if (productoActualizado != null)
+        {
+            try
             {
-                producto.OfertasFlashes = new List<Modelos.Entidades.OfertasFlash>();
+                await _elasticContext.Client.IndexAsync(productoActualizado, i => i.Index("productos").Id(productoActualizado.IdProducto.ToString()));
             }
-            producto.OfertasFlashes.Add(nuevaOferta);
-        }
-
-        await _repositorio.ActualizarProductoAsync(producto);
-
-        // Actualizar Elasticsearch
-        try
-        {
-            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-        }
-        catch
-        {
-            // Falla silenciosa
+            catch
+            {
+                // Falla silenciosa
+            }
         }
 
         // Invalidar caché de Redis
-        try
-        {
-            var dbRedis = _redisContext.Database;
-            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
-            var keys = server.Keys(pattern: "productos:*").ToArray();
-            if (keys.Any())
-            {
-                await dbRedis.KeyDeleteAsync(keys);
-            }
-        }
-        catch
-        {
-            // Falla silenciosa
-        }
+        await InvalidarCacheProductosAsync();
     }
 
     public async Task<List<string>> ObtenerCodigosPaisAsync()
@@ -658,6 +649,24 @@ public class ProductoServicio : IProductoServicio
         {
             Console.WriteLine("Error en ClickHouse: " + ex.Message);
             // Ignorar excepciones de métricas
+        }
+    }
+
+    private async Task InvalidarCacheProductosAsync()
+    {
+        try
+        {
+            var dbRedis = _redisContext.Database;
+            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
+            var keys = server.Keys(pattern: "productos:*").ToArray();
+            if (keys.Any())
+            {
+                await dbRedis.KeyDeleteAsync(keys);
+            }
+        }
+        catch
+        {
+            // Falla silenciosa
         }
     }
 }

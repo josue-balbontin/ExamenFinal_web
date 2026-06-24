@@ -13,11 +13,13 @@ public class PedidoServicio : IPedidoServicio
 {
     private readonly MarketplaceDbContext _dbContext;
     private readonly RedisContext _redisContext;
+    private readonly ElasticsearchContext _elasticContext;
 
-    public PedidoServicio(MarketplaceDbContext dbContext, RedisContext redisContext)
+    public PedidoServicio(MarketplaceDbContext dbContext, RedisContext redisContext, ElasticsearchContext elasticContext)
     {
         _dbContext = dbContext;
         _redisContext = redisContext;
+        _elasticContext = elasticContext;
     }
 
     public async Task<Modelos.Entidades.Pedido> CrearPedidoAsync(int idCliente, CrearPedidoRequestDto request)
@@ -88,6 +90,33 @@ public class PedidoServicio : IPedidoServicio
 
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            // Actualizar Elasticsearch para cada producto afectado
+            foreach (var itemDto in request.Items)
+            {
+                var p = await _dbContext.Productos.FirstOrDefaultAsync(x => x.IdProducto == itemDto.IdProducto);
+                if (p != null)
+                {
+                    try
+                    {
+                        await _elasticContext.Client.IndexAsync(p, i => i.Index("productos").Id(p.IdProducto.ToString()));
+                    }
+                    catch { /* ignorar ES error */ }
+                }
+            }
+
+            // Invalidar caché de Redis general del catálogo para reflejar cambios de stock
+            try
+            {
+                var dbRedis = _redisContext.Database;
+                var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
+                var keys = server.Keys(pattern: "productos:*").ToArray();
+                if (keys.Any())
+                {
+                    await dbRedis.KeyDeleteAsync(keys);
+                }
+            }
+            catch { /* ignorar Redis error */ }
 
             // Vaciar el carrito en Redis
             await _redisContext.Database.KeyDeleteAsync($"carrito:usuario:{idCliente}");
