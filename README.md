@@ -1,6 +1,6 @@
 #  Marketplace de Vendedores
 
-Bienvenido al repositorio del proyecto final del curso de Programación Web. Este proyecto consiste en el desarrollo de una plataforma tipo 
+Bienvenido al repositorio del proyecto final del curso de Programación Web. Este proyecto consiste en el desarrollo de una plataforma tipo :
 
 **Marketplace multivendedor** (estilo Facebook Marketplace), donde diversos usuarios pueden ofertar sus productos y los clientes tienen la libertad de adquirir artículos de múltiples vendedores de forma centralizada.
 
@@ -97,6 +97,22 @@ La decisión de utilizar la combinación de C# y Python (Django), y no utilizar 
 - **¿Por qué sí usar Python (Django) para el Panel Administrativo?** 
   Implementar paneles de gestión (control de usuarios, RRHH, reportes de stock) desde cero en C# o Java es muy demandante en tiempo. **Django** proporciona un panel de administración autogenerado (*out-of-the-box*) sumamente robusto. Al usarlo en el backend administrativo, aprovechamos el desarrollo rápido y flexible de Python para las tareas de moderación interna, sin arriesgar el core transaccional del sistema.
 
+
+## Documentación Adicional
+
+Como parte de los entregables del proyecto se entrega la sgt documentacion :
+
+- [Historias de Usuario](https://github.com/josue-balbontin/ExamenFinal_web/issues?q=is%3Aissue%20state%3Aclosed)
+- [Tabla de Trazabilidad](./docs/Tabla_de_Trazabilidad.md)
+- [Tablero Kanban](https://github.com/users/josue-balbontin/projects/4/views/1)
+
+**ADRs (Architecture Decision Records):**
+- [ADR 001 - Monolito Modular vs Microservicios](./docs/adr/0001-monolito-modular-vs-microservicios.md)
+- [ADR 002 - Base de Datos PostgreSQL con Esquemas por Módulo](./docs/adr/0002-postgres-con-schemas-por-modulo.md)
+- [ADR 003 - Stack del Módulo Auth](./docs/adr/0003-stack-del-modulo-auth.md)
+- [ADR 004 - Comunicación entre Módulos](./docs/adr/0004-comunicacion-entre-modulos.md)
+- [ADR 005 - Frontend Framework y Arquitectura](./docs/adr/0005-frontend-framework-y-arquitectura.md)
+- [ADR 006 - Uso de NGINX como Reverse Proxy Único](./docs/adr/0006-reverse-proxy-nginx.md)
 
 # Miembros del Equipo
 
