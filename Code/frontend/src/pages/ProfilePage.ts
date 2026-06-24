@@ -5,6 +5,8 @@ import type { ProfileTab } from '../types/profiles.ts';
 import { NavbarComponent } from '../components/Navbar.ts';
 import { CartDrawerComponent } from '../components/CartDrawer.ts';
 import { buildUserProfile } from '../utils/profile.ts';
+import { MyStoreTabComponent } from '../components/MyStoreTab.js';
+import { EditProfileModalComponent } from '../components/EditProfileModal.js';
 
 export function createProfilePage(
   store: Store<AppState>,
@@ -20,7 +22,7 @@ export function createProfilePage(
   const user = store.getState().auth.user!;
   const profile = buildUserProfile(user);
 
-  let activeTab: ProfileTab = 'Overview';
+  let activeTab: ProfileTab = 'Mi tienda';
 
   const page = document.createElement('div');
   page.className = 'profile-page';
@@ -52,6 +54,13 @@ export function createProfilePage(
   const editBtn = document.createElement('button');
   editBtn.className = 'profile-header__edit-btn';
   editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar Perfil`;
+  editBtn.addEventListener('click', () => {
+    const modal = new EditProfileModalComponent(store, () => {
+      // Re-render la página al cerrar para reflejar los cambios
+      router.navigate('/profile');
+    });
+    document.body.appendChild(modal.getElement());
+  });
 
   const topRow = document.createElement('div');
   topRow.className = 'profile-header__top-row';
@@ -94,7 +103,7 @@ export function createProfilePage(
   headerCard.appendChild(metaRow);
   content.appendChild(headerCard);
 
-  const tabs: ProfileTab[] = ['Overview', 'Mi tienda'];
+  const tabs: ProfileTab[] = ['Mi tienda'];
   const tabCounts: Partial<Record<ProfileTab, number>> = {
     'Mi tienda': profile.storeCount,
   };
@@ -109,46 +118,9 @@ export function createProfilePage(
   function renderTabContent(): void {
     tabPanelWrapper.innerHTML = '';
 
-    if (activeTab === 'Overview') {
-      const section = document.createElement('div');
-      section.className = 'profile-overview';
-
-      const actTitle = document.createElement('h2');
-      actTitle.className = 'profile-overview__section-title';
-      actTitle.textContent = 'ACTIVIDAD RECIENTE';
-      section.appendChild(actTitle);
-
-      profile.recentActivity.forEach((item) => {
-        const row = document.createElement('div');
-        row.className = 'profile-overview__activity-row';
-
-        const badge = document.createElement('span');
-        badge.className = `profile-overview__badge profile-overview__badge--${item.type.toLowerCase()}`;
-        badge.textContent = item.type;
-
-        const productName = document.createElement('span');
-        productName.className = 'profile-overview__activity-name';
-        productName.textContent = item.productName;
-
-        const date = document.createElement('span');
-        date.className = 'profile-overview__activity-date';
-        date.textContent = item.date;
-
-        row.appendChild(badge);
-        row.appendChild(productName);
-        row.appendChild(date);
-
-        if (item.amount !== undefined) {
-          const amount = document.createElement('span');
-          amount.className = 'profile-overview__activity-amount';
-          amount.textContent = `$${item.amount.toFixed(2)}`;
-          row.appendChild(amount);
-        }
-
-        section.appendChild(row);
-      });
-
-      tabPanelWrapper.appendChild(section);
+    if (activeTab === 'Mi tienda') {
+      const myStore = new MyStoreTabComponent();
+      tabPanelWrapper.appendChild(myStore.getElement());
     } else {
       const placeholder = document.createElement('p');
       placeholder.className = 'profile-tabs__placeholder';

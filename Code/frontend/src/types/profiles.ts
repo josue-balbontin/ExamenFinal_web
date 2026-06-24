@@ -22,4 +22,4 @@ export interface UserProfile {
   recentActivity: ActivityItem[];
 }
 
-export type ProfileTab = 'Overview' | 'Mi tienda';
+export type ProfileTab = 'Mi tienda';
