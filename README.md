@@ -28,7 +28,7 @@ El sistema cuenta con una arquitectura de accesos bien segmentada:
 
 ##  Diseño y Prototipado
 1. El diseño de la interfaz de usuario se encuentra plasmado en Figma:
-    - [Marketplace web frontend](https://cameo-radius-07613459.figma.site/)
+    - [Marketplace web frontend](https://www.figma.com/design/nQDFzEzTbJVHHEzPQ6XOEd/Ecommerce---Examen-final?node-id=0-1&t=K2jdzlGHw1NSpSGB-1)
 2. Diseño de la base de datos 
 
     ![Diagrama de Base de Datos](./images/Database.png)
