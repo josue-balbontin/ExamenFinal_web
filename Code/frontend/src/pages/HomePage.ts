@@ -5,6 +5,7 @@ import { NavbarComponent } from '../components/Navbar.js';
 import { SidebarComponent } from '../components/Sidebar.js';
 import { ProductGridComponent } from '../components/ProductGrid.js';
 import { CartDrawerComponent } from '../components/CartDrawer.js';
+import { createNotification } from '../utils/notifications.js';
 import { MAX_PRICE_DEFAULT } from '../utils/products.js';
 
 export function createHomePage(
@@ -22,6 +23,22 @@ export function createHomePage(
     maxPrice: MAX_PRICE_DEFAULT,
     cartOpen: false,
   });
+
+  // Simula llegada de notificación "cuenta aprobada" al entrar al home
+  // (en producción esto vendría del backend vía WebSocket o polling)
+  const existing = store.getState().notifications;
+  const alreadySent = existing.some((n) => n.type === 'account_approved');
+
+  if (!alreadySent) {
+    const notif = createNotification(
+      'account_approved',
+      '¡Tu cuenta fue aprobada!',
+      'Ya puedes empezar a vender en MarketPlace. Visita "My Store" para agregar tus productos.'
+    );
+    store.setState({
+      notifications: [notif, ...store.getState().notifications],
+    });
+  }
 
   const page = document.createElement('div');
   page.className = 'home-page';

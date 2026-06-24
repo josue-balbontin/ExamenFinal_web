@@ -1,6 +1,7 @@
 import type { AppState } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
+import { NotificationDrawerComponent } from './NotificationDrawer.js';
 
 export class NavbarComponent {
   private store: Store<AppState>;
@@ -8,12 +9,14 @@ export class NavbarComponent {
   private root: HTMLElement;
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
   private unsubs: Array<() => void> = [];
+  private notifDrawer: NotificationDrawerComponent | null = null;
 
   constructor(store: Store<AppState>, router: Router) {
     this.store = store;
     this.router = router;
     this.root = this.render();
     this.bindStoreUpdates();
+    this.mountNotifDrawer();
   }
 
   private render(): HTMLElement {
@@ -41,7 +44,7 @@ export class NavbarComponent {
     // Search
     const searchWrapper = document.createElement('div');
     searchWrapper.className = 'navbar__search';
-    const searchIcon = `<svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+    searchWrapper.innerHTML = `<svg class="navbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
     const searchInput = document.createElement('input');
     searchInput.className = 'navbar__search-input';
     searchInput.type = 'search';
@@ -54,28 +57,41 @@ export class NavbarComponent {
         this.store.setState({ searchQuery: searchInput.value });
       }, 350);
     });
-    searchWrapper.innerHTML = searchIcon;
     searchWrapper.appendChild(searchInput);
 
     // Actions
     const actions = document.createElement('div');
     actions.className = 'navbar__actions';
 
-    // Notification button
-    const notifBtn = document.createElement('button');
-    notifBtn.className = 'navbar__icon-btn';
-    notifBtn.setAttribute('aria-label', 'Notificaciones');
-    notifBtn.innerHTML = `
+    // ── Bell button ──
+    const unreadCount = this.store
+      .getState()
+      .notifications.filter((n) => !n.read).length;
+    const bellBtn = document.createElement('button');
+    bellBtn.className = 'navbar__icon-btn';
+    bellBtn.setAttribute(
+      'aria-label',
+      `Notificaciones${unreadCount > 0 ? `, ${unreadCount} sin leer` : ''}`
+    );
+    bellBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
         <path d="M13.73 21a2 2 0 01-3.46 0"/>
       </svg>
+      ${unreadCount > 0 ? `<span class="navbar__badge navbar__badge--notif" aria-hidden="true">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}
     `;
+    bellBtn.addEventListener('click', () => {
+      const { notifOpen, cartOpen } = this.store.getState();
+      this.store.setState({
+        notifOpen: !notifOpen,
+        cartOpen: notifOpen ? cartOpen : false, // cierra carrito si abre notif
+      });
+    });
 
-    // Cart button
+    // ── Cart button ──
     const cartCount = this.store
       .getState()
-      .cart.reduce((sum, i) => sum + i.cantidad, 0);
+      .cart.reduce((s, i) => s + i.cantidad, 0);
     const cartBtn = document.createElement('button');
     cartBtn.className = 'navbar__icon-btn';
     cartBtn.setAttribute('aria-label', `Carrito, ${cartCount} productos`);
@@ -87,10 +103,14 @@ export class NavbarComponent {
       ${cartCount > 0 ? `<span class="navbar__badge" aria-hidden="true">${cartCount}</span>` : ''}
     `;
     cartBtn.addEventListener('click', () => {
-      this.store.setState({ cartOpen: !this.store.getState().cartOpen });
+      const { cartOpen, notifOpen } = this.store.getState();
+      this.store.setState({
+        cartOpen: !cartOpen,
+        notifOpen: cartOpen ? notifOpen : false,
+      });
     });
 
-    // User button
+    // ── User button ──
     const userBtn = document.createElement('button');
     userBtn.className = 'navbar__icon-btn';
     userBtn.setAttribute('aria-label', 'Cuenta de usuario');
@@ -104,7 +124,7 @@ export class NavbarComponent {
       }
     });
 
-    actions.appendChild(notifBtn);
+    actions.appendChild(bellBtn);
     actions.appendChild(cartBtn);
     actions.appendChild(userBtn);
 
@@ -113,6 +133,13 @@ export class NavbarComponent {
     nav.appendChild(actions);
 
     return nav;
+  }
+
+  private mountNotifDrawer(): void {
+    // Unmount previous if exists
+    this.notifDrawer?.destroy();
+    this.notifDrawer = new NotificationDrawerComponent(this.store);
+    document.body.appendChild(this.notifDrawer.getElement());
   }
 
   private rebuildNav(): void {
@@ -125,12 +152,14 @@ export class NavbarComponent {
   private bindStoreUpdates(): void {
     this.unsubs.forEach((u) => u());
     this.unsubs = [];
-    const unsub = this.store.subscribe('cart', () => this.rebuildNav());
-    this.unsubs.push(unsub);
+    const u1 = this.store.subscribe('cart', () => this.rebuildNav());
+    const u2 = this.store.subscribe('notifications', () => this.rebuildNav());
+    this.unsubs.push(u1, u2);
   }
 
   destroy(): void {
     this.unsubs.forEach((u) => u());
+    this.notifDrawer?.destroy();
   }
 
   getElement(): HTMLElement {
