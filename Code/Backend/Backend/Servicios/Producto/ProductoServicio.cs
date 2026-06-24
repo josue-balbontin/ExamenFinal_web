@@ -22,6 +22,7 @@ public class ProductoServicio : IProductoServicio
     private readonly ClickHouseContext _clickHouseContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly MongoDbContext _mongoContext;
+    private readonly MarketplaceDbContext _dbContext;
 
     public ProductoServicio(
         IProductoRepositorio repositorio,
@@ -29,7 +30,8 @@ public class ProductoServicio : IProductoServicio
         ElasticsearchContext elasticContext,
         ClickHouseContext clickHouseContext,
         IHttpContextAccessor httpContextAccessor,
-        MongoDbContext mongoContext)
+        MongoDbContext mongoContext,
+        MarketplaceDbContext dbContext)
     {
         _repositorio = repositorio;
         _redisContext = redisContext;
@@ -37,6 +39,7 @@ public class ProductoServicio : IProductoServicio
         _clickHouseContext = clickHouseContext;
         _httpContextAccessor = httpContextAccessor;
         _mongoContext = mongoContext;
+        _dbContext = dbContext;
     }
 
     public async Task<List<ProductoResponseDto>> BuscarProductosAsync(string? terminoBusqueda, List<int>? categorias, int pagina)
@@ -205,17 +208,19 @@ public class ProductoServicio : IProductoServicio
             }
 
             string nombreUsuario = "Usuario Anónimo";
+            int usuarioId = 0;
             if (r.Contains("id_usuario_cliente"))
             {
-                int idUsuario = r["id_usuario_cliente"].AsInt32;
-                if (diccionarioUsuarios.ContainsKey(idUsuario))
+                usuarioId = r["id_usuario_cliente"].AsInt32;
+                if (diccionarioUsuarios.ContainsKey(usuarioId))
                 {
-                    nombreUsuario = diccionarioUsuarios[idUsuario];
+                    nombreUsuario = diccionarioUsuarios[usuarioId];
                 }
             }
 
             var comentarioDto = new ComentarioDto
             {
+                IdUsuario = usuarioId,
                 Calificacion = calificacion,
                 Comentario = r.Contains("comentario") ? r["comentario"].AsString : "",
                 NombreUsuario = nombreUsuario,
@@ -254,8 +259,28 @@ public class ProductoServicio : IProductoServicio
             throw new ArgumentException("El producto especificado no existe.");
         }
 
+        // 1.5. Validar que el usuario haya comprado el producto
+        bool comproProducto = _dbContext.DetallesPedidos
+            .Any(dp => dp.IdProducto == idProducto && dp.IdPedidoNavigation.IdCliente == idUsuario);
+        
+        if (!comproProducto)
+        {
+            throw new ArgumentException("Solo puedes calificar productos que hayas comprado.");
+        }
+
         // 2. Insertar en MongoDB
         var collection = _mongoContext.Database.GetCollection<BsonDocument>("resenas_productos");
+
+        // 2.5 Validar que no haya reseñado ya
+        var filter = Builders<BsonDocument>.Filter.And(
+            Builders<BsonDocument>.Filter.Eq("id_producto", idProducto),
+            Builders<BsonDocument>.Filter.Eq("id_usuario_cliente", idUsuario)
+        );
+        var resenaExistente = await collection.Find(filter).FirstOrDefaultAsync();
+        if (resenaExistente != null)
+        {
+            throw new ArgumentException("Ya has calificado este producto.");
+        }
 
         var nuevaResena = new BsonDocument
         {
@@ -319,15 +344,18 @@ public class ProductoServicio : IProductoServicio
 
         var productoCreado = await _repositorio.AgregarProductoAsync(producto);
 
-        // Indexar en Elasticsearch
-        try
+        // Indexar en Elasticsearch en background para no bloquear
+        _ = Task.Run(async () =>
         {
-            await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
-        }
-        catch
-        {
-            // Falla silenciosa si ES no está disponible
-        }
+            try
+            {
+                await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
+            }
+            catch
+            {
+                // Falla silenciosa
+            }
+        });
 
         string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
         return MapearA_Dto(productoCreado, region, 0, 0);
@@ -351,14 +379,17 @@ public class ProductoServicio : IProductoServicio
         await _repositorio.ActualizarProductoAsync(producto);
 
         // Actualizar en Elasticsearch (reindexando el documento completo)
-        try
+        _ = Task.Run(async () =>
         {
-            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-        }
-        catch
-        {
-            // Falla silenciosa
-        }
+            try
+            {
+                await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+            }
+            catch
+            {
+                // Falla silenciosa
+            }
+        });
     }
 
     public async Task<ProductoResponseDto> EditarProductoAsync(int idVendedor, int idProducto, EditarProductoRequestDto request)
@@ -420,31 +451,27 @@ public class ProductoServicio : IProductoServicio
 
         await _repositorio.ActualizarProductoAsync(producto);
 
-        // Actualizar Elasticsearch
-        try
+        // Actualizar Elasticsearch e invalidar Redis en background
+        _ = Task.Run(async () =>
         {
-            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-        }
-        catch
-        {
-            // Falla silenciosa
-        }
-
-        // Invalidar caché de Redis para que los cambios se reflejen inmediatamente
-        try
-        {
-            var dbRedis = _redisContext.Database;
-            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
-            var keys = server.Keys(pattern: "productos:*").ToArray();
-            if (keys.Any())
+            try
             {
-                await dbRedis.KeyDeleteAsync(keys);
+                await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
             }
-        }
-        catch
-        {
-            // Falla silenciosa
-        }
+            catch { }
+
+            try
+            {
+                var dbRedis = _redisContext.Database;
+                var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
+                var keys = server.Keys(pattern: "productos:*").ToArray();
+                if (keys.Any())
+                {
+                    await dbRedis.KeyDeleteAsync(keys);
+                }
+            }
+            catch { }
+        });
 
         string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
         return MapearA_Dto(producto, region, 0, 0);

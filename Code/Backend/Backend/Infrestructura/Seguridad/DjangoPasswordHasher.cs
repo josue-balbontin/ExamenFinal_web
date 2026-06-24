@@ -42,7 +42,25 @@ public static class DjangoPasswordHasher
     /// </summary>
     public static bool VerifyPassword(string password, string hashedPassword)
     {
-        if (string.IsNullOrEmpty(hashedPassword) || !hashedPassword.StartsWith("pbkdf2_sha256$"))
+        if (string.IsNullOrEmpty(hashedPassword))
+        {
+            return false;
+        }
+
+        // Si la contraseña fue encriptada con BCrypt (empieza con $2a$, $2b$ o $2y$)
+        if (hashedPassword.StartsWith("$2a$") || hashedPassword.StartsWith("$2b$") || hashedPassword.StartsWith("$2y$"))
+        {
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        if (!hashedPassword.StartsWith("pbkdf2_sha256$"))
         {
             return false;
         }

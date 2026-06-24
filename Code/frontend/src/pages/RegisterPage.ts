@@ -1,5 +1,5 @@
 import { RegisterFormComponent } from '../components/RegisterForm.js';
-import { registerService } from '../utils/auth.js';
+import { registerService, loginService } from '../utils/auth.js';
 import type { AppState } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
@@ -17,6 +17,14 @@ export function createRegisterPage(
         auth: { ...store.getState().auth, loading: true, error: null },
       });
       const user = await registerService(data);
+
+      // Hacer login automático para obtener y guardar el token JWT
+      try {
+        await loginService({ email: data.email, password: data.password });
+      } catch (err) {
+        console.error('Error en auto-login:', err);
+      }
+
       store.setState({
         auth: { isAuthenticated: true, user, loading: false, error: null },
       });

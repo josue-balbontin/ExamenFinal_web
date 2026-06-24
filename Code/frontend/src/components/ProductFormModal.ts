@@ -1,4 +1,6 @@
 import type { StoreProduct } from '../types/store-product.js';
+import { api } from '../utils/api.js';
+import { showStatusModal } from './StatusModal.js';
 
 export class ProductFormModalComponent {
   private onClose: () => void;
@@ -63,6 +65,15 @@ export class ProductFormModalComponent {
         placeholder: 'Ej. Camiseta de algodón',
         value: this.product?.name ?? '',
         required: true,
+      },
+      {
+        id: 'cp-description',
+        name: 'description',
+        label: 'Descripción',
+        type: 'textarea',
+        placeholder: 'Detalles del producto...',
+        value: this.product?.description ?? '',
+        full: true,
       },
       {
         id: 'cp-price',
@@ -183,16 +194,24 @@ export class ProductFormModalComponent {
     label.htmlFor = field.id;
     label.textContent = field.label + (field.required ? ' *' : '');
 
-    const input = document.createElement('input');
-    input.className = 'edit-profile-modal__input';
+    let input: HTMLInputElement | HTMLTextAreaElement;
+    if (field.type === 'textarea') {
+      input = document.createElement('textarea');
+      input.className =
+        'edit-profile-modal__input edit-profile-modal__textarea';
+      input.rows = 3;
+    } else {
+      input = document.createElement('input');
+      input.className = 'edit-profile-modal__input';
+      input.type = field.type;
+      if (field.step) input.setAttribute('step', field.step);
+      if (field.type === 'number') input.setAttribute('min', '0');
+    }
     input.id = field.id;
     input.name = field.name;
-    input.type = field.type;
     input.placeholder = field.placeholder;
     input.value = field.value;
     if (field.required) input.setAttribute('aria-required', 'true');
-    if (field.step) input.setAttribute('step', field.step);
-    if (field.type === 'number') input.setAttribute('min', '0');
 
     const errorSpan = document.createElement('span');
     errorSpan.className = 'edit-profile-modal__field-error';
@@ -285,29 +304,41 @@ export class ProductFormModalComponent {
     if (!select) return;
 
     try {
-      const response = await fetch('/api/Categoria');
-      if (!response.ok) throw new Error('Error al cargar');
-
-      const categorias = await response.json();
+      const { data: categorias, error } = await api.GET('/Categoria');
+      if (error || !categorias) throw new Error('Error al cargar');
 
       select.innerHTML =
         '<option value="" disabled>Selecciona una categoría</option>';
-      categorias.forEach((c: { idCategoria: number; nombre: string }) => {
-        const option = document.createElement('option');
-        option.value = String(c.idCategoria);
-        option.textContent = c.nombre;
-        // In a real app we'd match by ID, but StoreProduct only has name or category might be missing in MOCK_STORE_PRODUCTS
-        // If we have a category, select it.
-        select.appendChild(option);
-      });
-      select.value = ''; // Since MOCK_STORE_PRODUCTS doesn't have a category property right now, just leave it unselected
+      categorias.forEach(
+        (c: { idCategoria?: number; nombre?: string | null }) => {
+          if (c.idCategoria && c.nombre) {
+            const option = document.createElement('option');
+            option.value = String(c.idCategoria);
+            option.textContent = c.nombre;
+            select.appendChild(option);
+          }
+        }
+      );
+      // Try to preselect if editing
+      if (this.product?.idCategoria) {
+        select.value = String(this.product.idCategoria);
+      } else {
+        select.value = '';
+      }
     } catch (e) {
       select.innerHTML =
         '<option value="" disabled selected>Error al cargar categorías</option>';
     }
   }
 
-  private handleSubmit(form: HTMLFormElement): void {
+  private async handleSubmit(form: HTMLFormElement): Promise<void> {
+    const serverError =
+      this.root.querySelector<HTMLElement>('#cp-server-error');
+    if (serverError) {
+      serverError.textContent = '';
+      serverError.style.display = 'none';
+    }
+
     // Clear previous errors
     form
       .querySelectorAll<HTMLElement>('.edit-profile-modal__field-error')
@@ -320,12 +351,12 @@ export class ProductFormModalComponent {
         el.classList.remove('edit-profile-modal__input--error');
       });
 
-    // Validate required fields (inputs and selects)
+    // Validate required fields (inputs, selects, textareas)
     let valid = true;
     form
       .querySelectorAll<
-        HTMLInputElement | HTMLSelectElement
-      >('input[aria-required="true"], select[aria-required="true"]')
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >('input[aria-required="true"], select[aria-required="true"], textarea[aria-required="true"]')
       .forEach((input) => {
         if (!input.value.trim()) {
           input.classList.add('edit-profile-modal__input--error');
@@ -344,21 +375,78 @@ export class ProductFormModalComponent {
     if (!valid) return;
 
     const saveBtn = this.root.querySelector<HTMLButtonElement>('#cp-save-btn');
+    const originalText = saveBtn ? saveBtn.textContent : '';
     if (saveBtn) {
       saveBtn.disabled = true;
       saveBtn.textContent = 'Guardando…';
     }
 
-    setTimeout(() => {
-      // Simulate save (here we could update the store or call API)
-      console.log(this.product ? 'Producto editado:' : 'Producto creado:');
-      const inputs = form.querySelectorAll<
-        HTMLInputElement | HTMLSelectElement
-      >('input, select');
-      inputs.forEach((input) => console.log(`${input.name}: ${input.value}`));
+    const payload = {
+      nombre: (
+        form.querySelector<HTMLInputElement>('#cp-name')?.value || ''
+      ).trim(),
+      descripcion: (
+        form.querySelector<HTMLTextAreaElement>('#cp-description')?.value || ''
+      ).trim(),
+      precioBase:
+        Number(form.querySelector<HTMLInputElement>('#cp-price')?.value) || 0,
+      stock:
+        Number(form.querySelector<HTMLInputElement>('#cp-stock')?.value) || 0,
+      idCategoria:
+        Number(form.querySelector<HTMLSelectElement>('#cp-category')?.value) ||
+        0,
+      urlImagen: (
+        form.querySelector<HTMLInputElement>('#cp-imageUrl')?.value || ''
+      ).trim(),
+    };
+
+    try {
+      if (this.product) {
+        // Edit
+        const { error } = await api.PUT('/Producto/{id}', {
+          params: { path: { id: Number(this.product.id) } },
+          body: payload,
+        });
+        if (error)
+          throw new Error(
+            (error as { mensaje?: string }).mensaje ||
+              'Error al actualizar el producto'
+          );
+      } else {
+        // Create
+        const { error } = await api.POST('/Producto', {
+          body: payload,
+        });
+        if (error)
+          throw new Error(
+            (error as { mensaje?: string }).mensaje ||
+              'Error al crear el producto'
+          );
+      }
 
       this.close();
-    }, 600);
+
+      showStatusModal({
+        type: 'success',
+        title: this.product
+          ? 'Producto actualizado'
+          : 'Producto creado exitosamente',
+        autoCloseMs: 3000,
+        onClose: () => {
+          window.location.reload();
+        },
+      });
+    } catch (err: unknown) {
+      if (serverError) {
+        serverError.textContent =
+          (err as Error).message || 'Ocurrió un error inesperado';
+        serverError.style.display = 'block';
+      }
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    }
   }
 
   private trapFocus(): void {

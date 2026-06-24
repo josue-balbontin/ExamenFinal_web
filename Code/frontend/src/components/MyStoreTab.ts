@@ -17,39 +17,48 @@ export class MyStoreTabComponent {
 
   private async loadProducts() {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/Producto/mis-productos', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { data, error } = await api.GET('/Producto/mis-productos');
 
-      if (!response.ok) throw new Error('Error al cargar productos');
+      if (error) throw new Error('Error al cargar productos');
 
-      const data = await response.json();
-
-      interface ProductoResponse {
+      interface BackendProduct {
         idProducto: number;
         nombre: string;
+        descripcion: string;
         precioAplicado?: number;
         precioBase?: number;
         precio?: number;
         stock: number;
         urlImagen?: string;
-        imageUrl?: string;
+        idCategoria: number;
+        fechaCreacion: string;
       }
 
-      // Map API response to StoreProduct
-      this.products = data.map((p: ProductoResponse): StoreProduct => {
-        const stockStatus: StockStatus =
-          p.stock > 10 ? 'in-stock' : p.stock > 0 ? 'low' : 'out-of-stock';
+      const productsData = (data || []) as BackendProduct[];
+
+      // Sort recent first
+      const sorted = productsData.sort(
+        (a, b) =>
+          new Date(b.fechaCreacion).getTime() -
+          new Date(a.fechaCreacion).getTime()
+      );
+
+      this.products = sorted.map((p) => {
+        let stockStatus: StockStatus = 'in-stock';
+        if (p.stock === 0) stockStatus = 'out-of-stock';
+        else if (p.stock < 5) stockStatus = 'low-stock';
+
         return {
           id: String(p.idProducto),
           name: p.nombre,
+          description: p.descripcion,
           price: p.precioAplicado || p.precioBase || p.precio || 0,
           stock: p.stock,
           status: stockStatus,
-          imageUrl: p.urlImagen || p.imageUrl,
+          imageUrl:
+            p.urlImagen ||
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=200',
+          idCategoria: p.idCategoria,
         };
       });
 
@@ -109,7 +118,7 @@ export class MyStoreTabComponent {
     newBtn.innerHTML = `<span aria-hidden="true">+</span> Nuevo Producto`;
     newBtn.addEventListener('click', () => {
       const modal = new ProductFormModalComponent(() => {
-        // Here we could re-render or reload products
+        this.loadProducts();
       });
       document.body.appendChild(modal.getElement());
     });
@@ -225,7 +234,7 @@ export class MyStoreTabComponent {
     editBtn.addEventListener('click', () => {
       if (product.status !== 'out-of-stock') {
         const modal = new ProductFormModalComponent(() => {
-          // Here we could re-render or reload products
+          this.loadProducts();
         }, product);
         document.body.appendChild(modal.getElement());
       }

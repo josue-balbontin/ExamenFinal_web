@@ -1,5 +1,6 @@
 export interface Review {
   id: string;
+  userId?: string;
   userName: string;
   rating: number;
   date: string;
@@ -19,4 +20,5 @@ export interface ProductDetail {
   description: string;
   imageUrl?: string;
   reviews: Review[];
+  distribution?: Record<number, number>;
 }

@@ -1,0 +1,1 @@
+UPDATE esquema_usuarios.usuarios SET password_hash = 'pbkdf2_sha256$600000$G70hmKkkb6JUxzRqHpHxyQ$p++b0mH7rvFTShskOKSo/8iG407AntdvrCClGeU2FEs=' WHERE email IN ('admin@marketplace.com', 'rrhh@marketplace.com', 'carlos@techstore.com', 'laura@ropastore.com', 'juan@cliente.com');

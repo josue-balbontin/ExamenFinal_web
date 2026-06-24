@@ -22,6 +22,7 @@ public class DistribucionEstrellasDto
 
 public class ComentarioDto
 {
+    public int IdUsuario { get; set; }
     public string NombreUsuario { get; set; } = string.Empty;
     public int Calificacion { get; set; }
     public string Comentario { get; set; } = string.Empty;

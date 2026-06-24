@@ -21,6 +21,7 @@ export async function loginService(data: LoginFormData): Promise<User> {
   }
 
   return {
+    id: responseData.idUsuario ? String(responseData.idUsuario) : undefined,
     email: responseData.email || data.email,
     name: responseData.nombre || 'Usuario',
     lastName: responseData.apellido || '',

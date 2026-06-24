@@ -1,4 +1,4 @@
-import type { AppState, Product } from '../types/index.js';
+import type { AppState, Product, Route } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
 import { NavbarComponent } from '../components/Navbar.js';
@@ -7,6 +7,7 @@ import { CartDrawerComponent } from '../components/CartDrawer.js';
 import {
   fetchProductDetail,
   getRatingDistribution,
+  submitReview,
 } from '../utils/product-detail.js';
 
 export async function createProductDetailPage(
@@ -20,8 +21,12 @@ export async function createProductDetailPage(
   }
 
   const detail = await fetchProductDetail(productId);
-  const dist = getRatingDistribution(detail.reviews);
+  const dist = detail.distribution || getRatingDistribution(detail.reviews);
   const maxDist = Math.max(...Object.values(dist), 1);
+  const currentUser = store.getState().auth.user;
+  const userHasReviewed = detail.reviews.some(
+    (r) => r.userId && r.userId === currentUser?.id
+  );
 
   const page = document.createElement('div');
   page.className = 'detail-page';
@@ -241,80 +246,93 @@ export async function createProductDetailPage(
     reviewsPanel.appendChild(reviewEl);
   });
 
-  const writePanel = document.createElement('div');
-  writePanel.className = 'detail-page__write-panel';
-
-  const writeTitle = document.createElement('h3');
-  writeTitle.className = 'detail-page__write-title';
-  writeTitle.textContent = 'ESCRIBE UNA REVIEW DEL PRODUCTO';
-
-  const ratingLabel = document.createElement('p');
-  ratingLabel.className = 'detail-page__write-label';
-  ratingLabel.textContent = 'RATING';
-
-  let selectedRating = 0;
-  const ratingWrapper = document.createElement('div');
-  ratingWrapper.className = 'detail-page__write-rating';
-  const interactiveStars = new StarRatingComponent({
-    value: 0,
-    interactive: true,
-    size: 'md',
-    onChange: (r) => {
-      selectedRating = r;
-      interactiveStars.update(r);
-      ratingHint.textContent = '';
-    },
-  });
-  const ratingHint = document.createElement('span');
-  ratingHint.className = 'detail-page__write-rating-hint';
-  ratingHint.textContent = 'Calificanos';
-  ratingWrapper.appendChild(interactiveStars.getElement());
-  ratingWrapper.appendChild(ratingHint);
-
-  const reviewLabel = document.createElement('p');
-  reviewLabel.className = 'detail-page__write-label';
-  reviewLabel.textContent = 'TU REVIEW';
-
-  const textarea = document.createElement('textarea');
-  textarea.className = 'detail-page__write-textarea';
-  textarea.placeholder = 'Escribe tu experiencia con este producto';
-  textarea.setAttribute('aria-label', 'Escribe tu review');
-  textarea.rows = 5;
-  const charCount = document.createElement('span');
-  charCount.className = 'detail-page__write-charcount';
-  charCount.textContent = '0 chars';
-  textarea.addEventListener('input', () => {
-    charCount.textContent = `${textarea.value.length} chars`;
-  });
-
-  const submitBtn = document.createElement('button');
-  submitBtn.className = 'detail-page__write-submit';
-  submitBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> SUBMIT REVIEW`;
-  submitBtn.addEventListener('click', () => {
-    if (!selectedRating) {
-      ratingHint.textContent = 'Elige una calificación';
-      return;
-    }
-    if (!textarea.value.trim()) {
-      return;
-    }
-    alert('¡Review enviada! (mock)');
-    selectedRating = 0;
-    interactiveStars.update(0);
-    textarea.value = '';
-    charCount.textContent = '0 chars';
-  });
-
-  writePanel.appendChild(writeTitle);
-  writePanel.appendChild(ratingLabel);
-  writePanel.appendChild(ratingWrapper);
-  writePanel.appendChild(reviewLabel);
-  writePanel.appendChild(textarea);
-  writePanel.appendChild(charCount);
-  writePanel.appendChild(submitBtn);
-
   bottomSection.appendChild(reviewsPanel);
-  bottomSection.appendChild(writePanel);
+
+  if (!userHasReviewed) {
+    const writePanel = document.createElement('div');
+    writePanel.className = 'detail-page__write-panel';
+
+    const writeTitle = document.createElement('h3');
+    writeTitle.className = 'detail-page__write-title';
+    writeTitle.textContent = 'ESCRIBE UNA REVIEW DEL PRODUCTO';
+
+    const ratingLabel = document.createElement('p');
+    ratingLabel.className = 'detail-page__write-label';
+    ratingLabel.textContent = 'RATING';
+
+    let selectedRating = 0;
+    const ratingWrapper = document.createElement('div');
+    ratingWrapper.className = 'detail-page__write-rating';
+    const interactiveStars = new StarRatingComponent({
+      value: 0,
+      interactive: true,
+      size: 'md',
+      onChange: (r) => {
+        selectedRating = r;
+        interactiveStars.update(r);
+        ratingHint.textContent = '';
+      },
+    });
+    const ratingHint = document.createElement('span');
+    ratingHint.className = 'detail-page__write-rating-hint';
+    ratingHint.textContent = 'Calificanos';
+    ratingWrapper.appendChild(interactiveStars.getElement());
+    ratingWrapper.appendChild(ratingHint);
+
+    const reviewLabel = document.createElement('p');
+    reviewLabel.className = 'detail-page__write-label';
+    reviewLabel.textContent = 'TU REVIEW';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'detail-page__write-textarea';
+    textarea.placeholder = 'Escribe tu experiencia con este producto';
+    textarea.setAttribute('aria-label', 'Escribe tu review');
+    textarea.rows = 5;
+    const charCount = document.createElement('span');
+    charCount.className = 'detail-page__write-charcount';
+    charCount.textContent = '0 chars';
+    textarea.addEventListener('input', () => {
+      charCount.textContent = `${textarea.value.length} chars`;
+    });
+
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'detail-page__write-submit';
+    submitBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> SUBMIT REVIEW`;
+    submitBtn.addEventListener('click', async () => {
+      if (!selectedRating) {
+        ratingHint.textContent = 'Elige una calificación';
+        return;
+      }
+      if (!textarea.value.trim()) {
+        return;
+      }
+
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = 'Enviando...';
+      submitBtn.disabled = true;
+
+      try {
+        await submitReview(productId, selectedRating, textarea.value.trim());
+        alert('¡Reseña enviada con éxito!');
+        router.navigate(`/product?id=${productId}` as Route);
+      } catch (err: unknown) {
+        alert((err as Error).message || 'Error al enviar la reseña');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    writePanel.appendChild(writeTitle);
+    writePanel.appendChild(ratingLabel);
+    writePanel.appendChild(ratingWrapper);
+    writePanel.appendChild(reviewLabel);
+    writePanel.appendChild(textarea);
+    writePanel.appendChild(charCount);
+    writePanel.appendChild(submitBtn);
+
+    bottomSection.appendChild(writePanel);
+  }
+
   content.appendChild(bottomSection);
   page.appendChild(content);
 

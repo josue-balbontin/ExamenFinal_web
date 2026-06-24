@@ -1,6 +1,7 @@
 import type { CartItem } from './cart.js';
 
 export interface User {
+  id?: string;
   email: string;
   name?: string;
   lastName?: string;

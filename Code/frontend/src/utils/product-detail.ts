@@ -20,6 +20,7 @@ export async function fetchProductDetail(id: string): Promise<ProductDetail> {
   const reviews: Review[] = reviewsData.map(
     (r: Record<string, unknown>, index: number) => ({
       id: r.idResena ? String(r.idResena) : index.toString(),
+      userId: r.idUsuario ? String(r.idUsuario) : undefined,
       userName: (r.nombreUsuario as string) || 'Usuario Anónimo',
       rating: (r.calificacion as number) || 0,
       date: r.fecha ? new Date(r.fecha as string).toLocaleDateString() : '',
@@ -27,8 +28,19 @@ export async function fetchProductDetail(id: string): Promise<ProductDetail> {
     })
   );
 
-  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-  const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+  const avgRating = reviewsRes.data?.promedioEstrellas || 0;
+
+  let dist: Record<number, number> | undefined;
+  if (reviewsRes.data?.distribucion) {
+    const d = reviewsRes.data.distribucion as Record<string, unknown>;
+    dist = {
+      5: (d.cincoEstrellas as number) || 0,
+      4: (d.cuatroEstrellas as number) || 0,
+      3: (d.tresEstrellas as number) || 0,
+      2: (d.dosEstrellas as number) || 0,
+      1: (d.unaEstrella as number) || 0,
+    };
+  }
 
   return {
     id: p.idProducto?.toString() || '',
@@ -42,6 +54,7 @@ export async function fetchProductDetail(id: string): Promise<ProductDetail> {
     stock: p.stock || 0,
     description: p.descripcion || '',
     reviews,
+    distribution: dist,
   };
 }
 
@@ -53,4 +66,22 @@ export function getRatingDistribution(
     if (r.rating >= 1 && r.rating <= 5) dist[r.rating]++;
   });
   return dist;
+}
+
+export async function submitReview(
+  productId: string,
+  rating: number,
+  text: string
+): Promise<void> {
+  const { error } = await api.POST('/Producto/{id}/reviews', {
+    params: { path: { id: parseInt(productId, 10) } },
+    body: { calificacion: rating, comentario: text },
+  });
+
+  if (error) {
+    throw new Error(
+      ((error as Record<string, unknown>)?.mensaje as string) ||
+        'No se pudo enviar la reseña'
+    );
+  }
 }
