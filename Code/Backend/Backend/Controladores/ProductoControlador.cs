@@ -22,7 +22,7 @@ public class ProductoControlador : ControllerBase
         _servicio = servicio;
     }
 
-    [HttpGet]
+    [HttpGet("obtener-productos")]
     [ProducesResponseType(typeof(IEnumerable<ProductoResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObtenerProductos(
         [FromQuery] string? terminoBusqueda, 
