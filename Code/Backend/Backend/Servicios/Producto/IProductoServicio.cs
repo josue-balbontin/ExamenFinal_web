@@ -14,5 +14,6 @@ public interface IProductoServicio
     Task<ProductoResponseDto> CrearProductoAsync(int idVendedor, Backend.Modelos.RequestDto.CrearProductoRequestDto request);
     Task ActualizarStockAsync(int idVendedor, int idProducto, Backend.Modelos.RequestDto.ActualizarStockRequestDto request);
     Task<ProductoResponseDto> EditarProductoAsync(int idVendedor, int idProducto, Backend.Modelos.RequestDto.EditarProductoRequestDto request);
+    Task ConfigurarOfertaFlashAsync(int idVendedor, int idProducto, Backend.Modelos.RequestDto.ConfigurarOfertaFlashRequestDto request);
     Task<List<string>> ObtenerCodigosPaisAsync();
 }

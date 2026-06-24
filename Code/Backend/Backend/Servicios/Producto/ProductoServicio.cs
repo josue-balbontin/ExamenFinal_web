@@ -450,6 +450,73 @@ public class ProductoServicio : IProductoServicio
         return MapearA_Dto(producto, region, 0, 0);
     }
 
+    public async Task ConfigurarOfertaFlashAsync(int idVendedor, int idProducto, ConfigurarOfertaFlashRequestDto request)
+    {
+        var producto = await _repositorio.ObtenerPorId(idProducto);
+
+        if (producto == null || producto.EstadoEliminado)
+        {
+            throw new ArgumentException("Producto no encontrado.");
+        }
+
+        if (producto.IdVendedor != idVendedor)
+        {
+            throw new UnauthorizedAccessException("No tienes permiso para editar este producto.");
+        }
+
+        var ofertaExistente = producto.OfertasFlashes?.FirstOrDefault(o => !o.EstadoEliminado);
+        if (ofertaExistente != null)
+        {
+            ofertaExistente.PorcentajeDescuento = request.PorcentajeDescuento;
+            ofertaExistente.FechaInicio = request.FechaInicio;
+            ofertaExistente.FechaFin = request.FechaFin;
+        }
+        else
+        {
+            var nuevaOferta = new Modelos.Entidades.OfertasFlash
+            {
+                IdProducto = idProducto,
+                PorcentajeDescuento = request.PorcentajeDescuento,
+                FechaInicio = request.FechaInicio,
+                FechaFin = request.FechaFin,
+                EstadoEliminado = false
+            };
+            if (producto.OfertasFlashes == null)
+            {
+                producto.OfertasFlashes = new List<Modelos.Entidades.OfertasFlash>();
+            }
+            producto.OfertasFlashes.Add(nuevaOferta);
+        }
+
+        await _repositorio.ActualizarProductoAsync(producto);
+
+        // Actualizar Elasticsearch
+        try
+        {
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        // Invalidar caché de Redis
+        try
+        {
+            var dbRedis = _redisContext.Database;
+            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
+            var keys = server.Keys(pattern: "productos:*").ToArray();
+            if (keys.Any())
+            {
+                await dbRedis.KeyDeleteAsync(keys);
+            }
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+    }
+
     public async Task<List<string>> ObtenerCodigosPaisAsync()
     {
         var codigosPredeterminados = new List<string> 

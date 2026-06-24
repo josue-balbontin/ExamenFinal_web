@@ -203,6 +203,41 @@ public class ProductoControlador : ControllerBase
         }
     }
 
+    [HttpPost("{id}/oferta-flash")]
+    [Authorize]
+    public async Task<IActionResult> ConfigurarOfertaFlash(int id, [FromBody] ConfigurarOfertaFlashRequestDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int idUsuario))
+            {
+                return Unauthorized(new { mensaje = "No se pudo identificar al usuario." });
+            }
+
+            await _servicio.ConfigurarOfertaFlashAsync(idUsuario, id, request);
+            return Ok(new { mensaje = "Oferta flash configurada exitosamente." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { mensaje = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Ocurrió un error interno en el servidor: " + ex.Message });
+        }
+    }
+
     [HttpGet("codigos-pais")]
     public async Task<IActionResult> ObtenerCodigosPais()
     {
