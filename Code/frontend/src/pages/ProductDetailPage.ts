@@ -1,9 +1,10 @@
-import type { AppState, Route } from '../types/index.js';
+import type { AppState } from '../types/index.js';
 import type { Store } from '../utils/store.js';
 import type { Router } from '../utils/router.js';
 import { NavbarComponent } from '../components/Navbar.js';
 import { StarRatingComponent } from '../components/StarRating.js';
 import { CartDrawerComponent } from '../components/CartDrawer.js';
+import { showStatusModal } from '../components/StatusModal.js';
 import { addToCart } from '../utils/cartServices.js';
 import {
   fetchProductDetail,
@@ -293,9 +294,97 @@ export async function createProductDetailPage(
       submitBtn.disabled = true;
 
       try {
-        await submitReview(productId, selectedRating, textarea.value.trim());
-        alert('¡Reseña enviada con éxito!');
-        router.navigate(`/product?id=${productId}` as Route);
+        const { avgRating, reviewCount, reviews, distribution } =
+          await submitReview(productId, selectedRating, textarea.value.trim());
+
+        // Actualizar los datos del detail
+        detail.rating = avgRating;
+        detail.reviewCount = reviewCount;
+        detail.reviews = reviews;
+        detail.distribution = distribution;
+
+        showStatusModal({
+          type: 'success',
+          title: 'Reseña creada exitosamente',
+          message: 'Tu reseña ha sido publicada y ya es visible para todos.',
+          autoCloseMs: 3000,
+        });
+
+        // Actualizar la sección de ratings en el top
+        ratingText.textContent = `${detail.rating.toFixed(1)} · ${detail.reviewCount.toLocaleString()} reviews`;
+        starsDisplay.update(Math.round(detail.rating));
+
+        // Actualizar la tarjeta resumen de reviews
+        avgNumber.textContent = detail.rating.toFixed(1);
+        avgStars.update(Math.round(detail.rating));
+        avgTotal.textContent = `${detail.reviewCount.toLocaleString()} total`;
+
+        // Actualizar las barras de distribución
+        const newMaxDist = Math.max(...Object.values(distribution), 1);
+        barsWrapper.innerHTML = '';
+        for (let i = 5; i >= 1; i--) {
+          const count = distribution[i] ?? 0;
+          const row = document.createElement('div');
+          row.className = 'detail-page__bar-row';
+          const label = document.createElement('span');
+          label.className = 'detail-page__bar-label';
+          label.textContent = String(i);
+          const track = document.createElement('div');
+          track.className = 'detail-page__bar-track';
+          const fill = document.createElement('div');
+          fill.className = 'detail-page__bar-fill';
+          fill.style.width = `${(count / newMaxDist) * 100}%`;
+          track.appendChild(fill);
+          const countEl = document.createElement('span');
+          countEl.className = 'detail-page__bar-count';
+          countEl.textContent = String(count);
+          row.appendChild(label);
+          row.appendChild(track);
+          row.appendChild(countEl);
+          barsWrapper.appendChild(row);
+        }
+
+        // Actualizar título de reviews
+        reviewsTitle.textContent = `REVIEWS (${detail.reviewCount.toLocaleString()})`;
+
+        // Agregar la nueva reseña al inicio de la lista
+        const newReviewEl = document.createElement('div');
+        newReviewEl.className = 'detail-page__review';
+        const newAvatar = document.createElement('div');
+        newAvatar.className = 'detail-page__review-avatar';
+        newAvatar.textContent = currentUser?.name?.[0].toUpperCase() || 'U';
+        newAvatar.setAttribute('aria-hidden', 'true');
+        const newReviewBody = document.createElement('div');
+        newReviewBody.className = 'detail-page__review-body';
+        const newReviewHeader = document.createElement('div');
+        newReviewHeader.className = 'detail-page__review-header';
+        const newReviewUser = document.createElement('span');
+        newReviewUser.className = 'detail-page__review-user';
+        newReviewUser.textContent = currentUser?.name || 'Tú';
+        const newReviewStars = new StarRatingComponent({
+          value: selectedRating,
+          size: 'sm',
+        });
+        const today = new Date().toLocaleDateString();
+        const newReviewDate = document.createElement('span');
+        newReviewDate.className = 'detail-page__review-date';
+        newReviewDate.textContent = today;
+        newReviewHeader.appendChild(newReviewUser);
+        newReviewHeader.appendChild(newReviewStars.getElement());
+        newReviewHeader.appendChild(newReviewDate);
+        const newReviewText = document.createElement('p');
+        newReviewText.className = 'detail-page__review-text';
+        newReviewText.textContent = textarea.value.trim();
+        newReviewBody.appendChild(newReviewHeader);
+        newReviewBody.appendChild(newReviewText);
+        newReviewEl.appendChild(newAvatar);
+        newReviewEl.appendChild(newReviewBody);
+
+        // Insertar la nueva reseña después del summary card
+        reviewsPanel.appendChild(newReviewEl);
+
+        // Ocultar el formulario de escritura
+        writePanel.style.display = 'none';
       } catch (err: unknown) {
         alert((err as Error).message || 'Error al enviar la reseña');
         submitBtn.innerHTML = originalText;

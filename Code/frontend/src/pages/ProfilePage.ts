@@ -104,9 +104,6 @@ export function createProfilePage(
   content.appendChild(headerCard);
 
   const tabs: ProfileTab[] = ['Mi tienda'];
-  const tabCounts: Partial<Record<ProfileTab, number>> = {
-    'Mi tienda': profile.storeCount,
-  };
 
   const tabBar = document.createElement('div');
   tabBar.className = 'profile-tabs';
@@ -134,8 +131,7 @@ export function createProfilePage(
     btn.className = `profile-tabs__tab${tab === activeTab ? ' profile-tabs__tab--active' : ''}`;
     btn.setAttribute('role', 'tab');
     btn.setAttribute('aria-selected', String(tab === activeTab));
-    const count = tabCounts[tab];
-    btn.textContent = count !== undefined ? `${tab} (${count})` : tab;
+    btn.textContent = tab;
 
     btn.addEventListener('click', () => {
       activeTab = tab;

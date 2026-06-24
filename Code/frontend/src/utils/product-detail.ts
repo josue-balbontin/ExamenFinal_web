@@ -4,10 +4,16 @@ import { api } from './api.js';
 export async function fetchProductDetail(id: string): Promise<ProductDetail> {
   const numId = parseInt(id, 10);
 
-  // Llamadas concurrentes al API
+  // Llamadas concurrentes al API (desactivando la caché local del navegador)
   const [productRes, reviewsRes] = await Promise.all([
-    api.GET('/Producto/{id}', { params: { path: { id: numId } } }),
-    api.GET('/Producto/{id}/reviews', { params: { path: { id: numId } } }),
+    api.GET('/Producto/{id}', {
+      params: { path: { id: numId } },
+      cache: 'no-store' as RequestCache,
+    }),
+    api.GET('/Producto/{id}/reviews', {
+      params: { path: { id: numId } },
+      cache: 'no-store' as RequestCache,
+    }),
   ]);
 
   if (productRes.error) {
@@ -72,7 +78,12 @@ export async function submitReview(
   productId: string,
   rating: number,
   text: string
-): Promise<void> {
+): Promise<{
+  avgRating: number;
+  reviewCount: number;
+  reviews: Review[];
+  distribution: Record<number, number>;
+}> {
   const { error } = await api.POST('/Producto/{id}/reviews', {
     params: { path: { id: parseInt(productId, 10) } },
     body: { calificacion: rating, comentario: text },
@@ -84,4 +95,39 @@ export async function submitReview(
         'No se pudo enviar la reseña'
     );
   }
+
+  // Obtener los reviews actualizados
+  const reviewsRes = await api.GET('/Producto/{id}/reviews', {
+    params: { path: { id: parseInt(productId, 10) } },
+    cache: 'no-store' as RequestCache,
+  });
+
+  const reviewsData = reviewsRes.data?.comentarios || [];
+  const reviews: Review[] = reviewsData.map(
+    (r: Record<string, unknown>, index: number) => ({
+      id: r.idResena ? String(r.idResena) : index.toString(),
+      userId: r.idUsuario ? String(r.idUsuario) : undefined,
+      userName: (r.nombreUsuario as string) || 'Usuario Anónimo',
+      rating: (r.calificacion as number) || 0,
+      date: r.fecha ? new Date(r.fecha as string).toLocaleDateString() : '',
+      text: (r.comentario as string) || '',
+    })
+  );
+
+  const avgRating = reviewsRes.data?.promedioEstrellas || 0;
+  const reviewCount = reviews.length;
+
+  let dist: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  if (reviewsRes.data?.distribucion) {
+    const d = reviewsRes.data.distribucion as Record<string, unknown>;
+    dist = {
+      5: (d.cincoEstrellas as number) || 0,
+      4: (d.cuatroEstrellas as number) || 0,
+      3: (d.tresEstrellas as number) || 0,
+      2: (d.dosEstrellas as number) || 0,
+      1: (d.unaEstrella as number) || 0,
+    };
+  }
+
+  return { avgRating, reviewCount, reviews, distribution: dist };
 }

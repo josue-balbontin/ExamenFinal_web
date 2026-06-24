@@ -541,11 +541,12 @@ function buildConfirmStep(
         })),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const { error } = await api.POST(
-        '/PedidoControlador' as any,
+        '/api/PedidoControlador' as any,
         { body } as any
       );
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
       if (error) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

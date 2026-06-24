@@ -79,12 +79,11 @@ export class ProductCardComponent {
     ratingWrapper.className = 'product-card__rating';
     ratingWrapper.setAttribute(
       'aria-label',
-      `Calificación: ${product.rating} de 5, ${product.reviewCount} reseñas`
+      `Calificación: ${product.rating} de 5`
     );
     ratingWrapper.innerHTML = `
       <span class="product-card__stars" aria-hidden="true">${this.renderStars(product.rating)}</span>
       <span class="product-card__rating-value">${product.rating}</span>
-      <span class="product-card__review-count">(${product.reviewCount.toLocaleString()})</span>
     `;
 
     const priceWrapper = document.createElement('div');

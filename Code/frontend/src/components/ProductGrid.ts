@@ -13,6 +13,7 @@ export class ProductGridComponent {
   private unsubs: Array<() => void> = [];
   private loading: boolean = false;
   private currentProducts: Product[] = [];
+  private handleVisibilityChange: (() => void) | null = null;
 
   constructor(store: Store<AppState>, router: Router) {
     this.store = store;
@@ -21,6 +22,7 @@ export class ProductGridComponent {
     this.root.className = 'product-grid__wrapper';
 
     this.bindStoreUpdates();
+    this.setupVisibilityListener();
     this.loadProducts();
   }
 
@@ -95,8 +97,24 @@ export class ProductGridComponent {
     });
   }
 
+  private setupVisibilityListener(): void {
+    // Recargar productos cuando vuelve a ser visible (ej: regresa del detalle del producto)
+    this.handleVisibilityChange = () => {
+      if (!document.hidden) {
+        this.loadProducts();
+      }
+    };
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+  }
+
   destroy(): void {
     this.unsubs.forEach((u) => u());
+    if (this.handleVisibilityChange) {
+      document.removeEventListener(
+        'visibilitychange',
+        this.handleVisibilityChange
+      );
+    }
   }
 
   getElement(): HTMLElement {
