@@ -20,7 +20,6 @@
   aspect-ratio: 4 / 3;
   background: #d1d5db;
   overflow: hidden;
-  position: relative;
   width: 100%;
 }
 
@@ -140,18 +139,4 @@
 
 .product-card__add-btn:active {
   background: #111827;
-}
-
-.product-card__flash-timer {
-  background: rgb(220 53 69 / 90%);
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
-  color: white;
-  font-size: 0.85rem;
-  font-weight: bold;
-  padding: 4px 8px;
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  z-index: 10;
 }
