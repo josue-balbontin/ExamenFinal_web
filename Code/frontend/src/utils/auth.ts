@@ -24,6 +24,14 @@ export async function loginService(data: LoginFormData): Promise<User> {
     email: responseData.email || data.email,
     name: responseData.nombre || 'Usuario',
     lastName: responseData.apellido || '',
+    phone: responseData.telefono || undefined,
+    address: responseData.direccionPrincipal || undefined,
+    memberSince: responseData.fechaRegistro
+      ? new Date(responseData.fechaRegistro).toLocaleDateString('es-ES', {
+          month: 'long',
+          year: 'numeric',
+        })
+      : undefined,
   };
 }
 

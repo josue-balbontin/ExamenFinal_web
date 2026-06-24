@@ -6,6 +6,7 @@ export interface User {
   lastName?: string;
   phone?: string;
   address?: string;
+  memberSince?: string;
 }
 
 export interface AuthState {

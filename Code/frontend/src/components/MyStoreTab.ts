@@ -1,21 +1,88 @@
-import type { StoreProduct } from '../types/store-product.js';
-import {
-  MOCK_STORE_PRODUCTS,
-  getStockLabel,
-  getStockBarWidth,
-} from '../utils/store-products.js';
+import type { StoreProduct, StockStatus } from '../types/store-product.js';
+import { getStockLabel, getStockBarWidth } from '../utils/store-products.js';
 import { ProductFormModalComponent } from './ProductFormModal.js';
+import { SellerRequestModalComponent } from './SellerRequestModal.js';
+import { ButtonComponent } from './Button.js';
 
 export class MyStoreTabComponent {
-  private products: StoreProduct[];
+  private products: StoreProduct[] = [];
   private root: HTMLElement;
-
   constructor() {
-    this.products = [...MOCK_STORE_PRODUCTS];
-    this.root = this.render();
+    this.root = document.createElement('div');
+    this.root.className = 'my-store';
+    this.root.innerHTML =
+      '<p class="my-store__loading">Cargando productos...</p>';
+    this.loadProducts();
   }
 
-  private render(): HTMLElement {
+  private async loadProducts() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/Producto/mis-productos', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Error al cargar productos');
+
+      const data = await response.json();
+
+      interface ProductoResponse {
+        idProducto: number;
+        nombre: string;
+        precioAplicado?: number;
+        precioBase?: number;
+        precio?: number;
+        stock: number;
+        urlImagen?: string;
+        imageUrl?: string;
+      }
+
+      // Map API response to StoreProduct
+      this.products = data.map((p: ProductoResponse): StoreProduct => {
+        const stockStatus: StockStatus =
+          p.stock > 10 ? 'in-stock' : p.stock > 0 ? 'low' : 'out-of-stock';
+        return {
+          id: String(p.idProducto),
+          name: p.nombre,
+          price: p.precioAplicado || p.precioBase || p.precio || 0,
+          stock: p.stock,
+          status: stockStatus,
+          imageUrl: p.urlImagen || p.imageUrl,
+        };
+      });
+
+      this.render();
+    } catch (e) {
+      this.root.innerHTML = '';
+
+      const container = document.createElement('div');
+      container.className = 'my-store__error-container';
+
+      const errorMsg = document.createElement('p');
+      errorMsg.className = 'my-store__error';
+      errorMsg.textContent =
+        'Hubo un error al cargar tus productos o no tienes permisos de vendedor.';
+
+      const requestBtn = new ButtonComponent({
+        text: 'Solicitar ser vendedor',
+        variant: 'primary',
+        onClick: () => {
+          const modal = new SellerRequestModalComponent(() => {});
+          document.body.appendChild(modal.getElement());
+        },
+      });
+      requestBtn.getElement().style.marginTop = '1rem';
+
+      container.appendChild(errorMsg);
+      container.appendChild(requestBtn.getElement());
+
+      this.root.appendChild(container);
+    }
+  }
+
+  private render(): void {
     const wrapper = document.createElement('div');
     wrapper.className = 'my-store';
 
@@ -75,7 +142,9 @@ export class MyStoreTabComponent {
     });
 
     wrapper.appendChild(table);
-    return wrapper;
+
+    this.root.innerHTML = '';
+    this.root.appendChild(wrapper);
   }
 
   private buildRow(product: StoreProduct): HTMLElement {

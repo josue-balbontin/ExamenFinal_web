@@ -10,22 +10,21 @@ export class ProductFormModalComponent {
     this.product = product;
     this.root = this.render();
     this.trapFocus();
-    this.loadCategories(this.product?.name ? undefined : undefined); // Will update later to support pre-selected category
+    this.loadCategories();
   }
 
   private render(): HTMLElement {
     const backdrop = document.createElement('div');
-    backdrop.className = 'edit-profile-backdrop'; // Reuse same backdrop style
+    backdrop.className = 'edit-profile-backdrop';
     backdrop.setAttribute('aria-hidden', 'true');
     backdrop.addEventListener('click', () => this.close());
 
     const modal = document.createElement('div');
-    modal.className = 'edit-profile-modal'; // Reuse base modal styles
+    modal.className = 'edit-profile-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'create-product-title');
 
-    // ── Header ──
     const header = document.createElement('div');
     header.className = 'edit-profile-modal__header';
 
