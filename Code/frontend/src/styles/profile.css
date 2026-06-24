@@ -144,73 +144,9 @@
   padding: 1rem 0;
 }
 
-.profile-overview__section-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.75rem;
-}
-
-.profile-overview__activity-row {
-  align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem 1rem;
-}
-
-.profile-overview__badge {
-  border-radius: var(--radius-sm);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 0.2rem 0.5rem;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.profile-overview__badge--comprado {
-  background: var(--color-text);
-  color: var(--color-surface);
-}
-
-.profile-overview__badge--review {
-  background: transparent;
-  border: 1.5px solid var(--color-border);
-  color: var(--color-text-muted);
-}
-
-.profile-overview__activity-name {
-  color: var(--color-text);
-  flex: 1;
-  font-size: 0.9rem;
-}
-
-.profile-overview__activity-date {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.profile-overview__activity-amount {
-  color: var(--color-text);
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 @media (width <= 600px) {
   .profile-header__meta {
     flex-direction: column;
     gap: 0.5rem;
-  }
-
-  .profile-overview__activity-row {
-    flex-wrap: wrap;
   }
 }

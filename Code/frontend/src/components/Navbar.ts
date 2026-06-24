@@ -61,6 +61,17 @@ export class NavbarComponent {
     const actions = document.createElement('div');
     actions.className = 'navbar__actions';
 
+    // Notification button
+    const notifBtn = document.createElement('button');
+    notifBtn.className = 'navbar__icon-btn';
+    notifBtn.setAttribute('aria-label', 'Notificaciones');
+    notifBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    `;
+
     // Cart button
     const cartCount = this.store
       .getState()
@@ -93,6 +104,7 @@ export class NavbarComponent {
       }
     });
 
+    actions.appendChild(notifBtn);
     actions.appendChild(cartBtn);
     actions.appendChild(userBtn);
 
