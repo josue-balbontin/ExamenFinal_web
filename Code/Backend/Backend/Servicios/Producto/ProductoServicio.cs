@@ -293,6 +293,7 @@ public class ProductoServicio : IProductoServicio
         };
 
         await collection.InsertOneAsync(nuevaResena);
+        await InvalidarCacheProductosAsync();
     }
 
     public async Task<List<ProductoResponseDto>> ObtenerMisProductosAsync(int idVendedor)
@@ -344,18 +345,16 @@ public class ProductoServicio : IProductoServicio
 
         var productoCreado = await _repositorio.AgregarProductoAsync(producto);
 
-        // Indexar en Elasticsearch en background para no bloquear
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
-            }
-            catch
-            {
-                // Falla silenciosa
-            }
-        });
+            await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        await InvalidarCacheProductosAsync();
 
         string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
         return MapearA_Dto(productoCreado, region, 0, 0);
@@ -378,18 +377,16 @@ public class ProductoServicio : IProductoServicio
         producto.Stock = request.Stock;
         await _repositorio.ActualizarProductoAsync(producto);
 
-        // Actualizar en Elasticsearch (reindexando el documento completo)
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-            }
-            catch
-            {
-                // Falla silenciosa
-            }
-        });
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        await InvalidarCacheProductosAsync();
     }
 
     public async Task<ProductoResponseDto> EditarProductoAsync(int idVendedor, int idProducto, EditarProductoRequestDto request)
@@ -451,27 +448,16 @@ public class ProductoServicio : IProductoServicio
 
         await _repositorio.ActualizarProductoAsync(producto);
 
-        // Actualizar Elasticsearch e invalidar Redis en background
-        _ = Task.Run(async () =>
+        try
         {
-            try
-            {
-                await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
-            }
-            catch { }
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
 
-            try
-            {
-                var dbRedis = _redisContext.Database;
-                var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
-                var keys = server.Keys(pattern: "productos:*").ToArray();
-                if (keys.Any())
-                {
-                    await dbRedis.KeyDeleteAsync(keys);
-                }
-            }
-            catch { }
-        });
+        await InvalidarCacheProductosAsync();
 
         string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
         return MapearA_Dto(producto, region, 0, 0);
@@ -528,20 +514,7 @@ public class ProductoServicio : IProductoServicio
         }
 
         // Invalidar caché de Redis
-        try
-        {
-            var dbRedis = _redisContext.Database;
-            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
-            var keys = server.Keys(pattern: "productos:*").ToArray();
-            if (keys.Any())
-            {
-                await dbRedis.KeyDeleteAsync(keys);
-            }
-        }
-        catch
-        {
-            // Falla silenciosa
-        }
+        await InvalidarCacheProductosAsync();
     }
 
     public async Task<List<string>> ObtenerCodigosPaisAsync()
@@ -658,6 +631,24 @@ public class ProductoServicio : IProductoServicio
         {
             Console.WriteLine("Error en ClickHouse: " + ex.Message);
             // Ignorar excepciones de métricas
+        }
+    }
+
+    private async Task InvalidarCacheProductosAsync()
+    {
+        try
+        {
+            var dbRedis = _redisContext.Database;
+            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
+            var keys = server.Keys(pattern: "productos:*").ToArray();
+            if (keys.Any())
+            {
+                await dbRedis.KeyDeleteAsync(keys);
+            }
+        }
+        catch
+        {
+            // Falla silenciosa
         }
     }
 }
