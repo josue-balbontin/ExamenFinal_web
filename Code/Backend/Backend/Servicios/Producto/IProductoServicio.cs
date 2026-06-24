@@ -11,4 +11,8 @@ public interface IProductoServicio
     Task<ResenasProductoResponseDto> ObtenerResenasDeProductoAsync(int idProducto);
     Task AgregarResenaAsync(int idProducto, int idUsuario, Backend.Modelos.RequestDto.CrearResenaRequestDto request);
     Task<List<ProductoResponseDto>> ObtenerMisProductosAsync(int idVendedor);
+    Task<ProductoResponseDto> CrearProductoAsync(int idVendedor, Backend.Modelos.RequestDto.CrearProductoRequestDto request);
+    Task ActualizarStockAsync(int idVendedor, int idProducto, Backend.Modelos.RequestDto.ActualizarStockRequestDto request);
+    Task<ProductoResponseDto> EditarProductoAsync(int idVendedor, int idProducto, Backend.Modelos.RequestDto.EditarProductoRequestDto request);
+    Task<List<string>> ObtenerCodigosPaisAsync();
 }

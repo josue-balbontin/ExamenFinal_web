@@ -302,6 +302,176 @@ public class ProductoServicio : IProductoServicio
         return resultado;
     }
 
+    public async Task<ProductoResponseDto> CrearProductoAsync(int idVendedor, CrearProductoRequestDto request)
+    {
+        var producto = new Producto
+        {
+            IdVendedor = idVendedor,
+            IdCategoria = request.IdCategoria,
+            Nombre = request.Nombre,
+            Descripcion = request.Descripcion,
+            PrecioBase = request.PrecioBase ?? 0.01,
+            Stock = request.Stock ?? 0,
+            UrlImagen = request.UrlImagen,
+            FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
+            EstadoEliminado = false
+        };
+
+        var productoCreado = await _repositorio.AgregarProductoAsync(producto);
+
+        // Indexar en Elasticsearch
+        try
+        {
+            await _elasticContext.Client.IndexAsync(productoCreado, i => i.Index("productos").Id(productoCreado.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa si ES no está disponible
+        }
+
+        string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
+        return MapearA_Dto(productoCreado, region, 0, 0);
+    }
+
+    public async Task ActualizarStockAsync(int idVendedor, int idProducto, ActualizarStockRequestDto request)
+    {
+        var producto = await _repositorio.ObtenerPorId(idProducto);
+        
+        if (producto == null || producto.EstadoEliminado)
+        {
+            throw new ArgumentException("Producto no encontrado.");
+        }
+
+        if (producto.IdVendedor != idVendedor)
+        {
+            throw new UnauthorizedAccessException("No tienes permiso para editar este producto.");
+        }
+
+        producto.Stock = request.Stock;
+        await _repositorio.ActualizarProductoAsync(producto);
+
+        // Actualizar en Elasticsearch (reindexando el documento completo)
+        try
+        {
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+    }
+
+    public async Task<ProductoResponseDto> EditarProductoAsync(int idVendedor, int idProducto, EditarProductoRequestDto request)
+    {
+        var producto = await _repositorio.ObtenerPorId(idProducto);
+
+        if (producto == null || producto.EstadoEliminado)
+        {
+            throw new ArgumentException("Producto no encontrado.");
+        }
+
+        if (producto.IdVendedor != idVendedor)
+        {
+            throw new UnauthorizedAccessException("No tienes permiso para editar este producto.");
+        }
+
+        // Actualizar campos básicos
+        producto.Nombre = request.Nombre;
+        producto.Descripcion = request.Descripcion;
+        producto.PrecioBase = request.PrecioBase ?? producto.PrecioBase;
+        producto.Stock = request.Stock ?? producto.Stock;
+        producto.UrlImagen = request.UrlImagen;
+        producto.IdCategoria = request.IdCategoria;
+
+        // Gestionar precios geolocalizados
+        if (request.PreciosGeolocalizados != null)
+        {
+            // Marcar como eliminados los precios geo existentes que ya no están en la lista
+            var geoExistentes = producto.PreciosGeolocalizados?.ToList() ?? new List<Modelos.Entidades.PreciosGeolocalizado>();
+            foreach (var existente in geoExistentes)
+            {
+                existente.EstadoEliminado = true;
+            }
+
+            // Agregar o actualizar los nuevos precios geo
+            foreach (var precioGeoDto in request.PreciosGeolocalizados)
+            {
+                var existente = geoExistentes.FirstOrDefault(pg => pg.CodigoPais == precioGeoDto.CodigoPais);
+                if (existente != null)
+                {
+                    // Reactivar y actualizar
+                    existente.Multiplicador = precioGeoDto.Multiplicador;
+                    existente.EstadoEliminado = false;
+                }
+                else
+                {
+                    // Crear nuevo
+                    var nuevoPrecioGeo = new Modelos.Entidades.PreciosGeolocalizado
+                    {
+                        IdProducto = idProducto,
+                        CodigoPais = precioGeoDto.CodigoPais,
+                        Multiplicador = precioGeoDto.Multiplicador,
+                        EstadoEliminado = false
+                    };
+                    producto.PreciosGeolocalizados!.Add(nuevoPrecioGeo);
+                }
+            }
+        }
+
+        await _repositorio.ActualizarProductoAsync(producto);
+
+        // Actualizar Elasticsearch
+        try
+        {
+            await _elasticContext.Client.IndexAsync(producto, i => i.Index("productos").Id(producto.IdProducto.ToString()));
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        // Invalidar caché de Redis para que los cambios se reflejen inmediatamente
+        try
+        {
+            var dbRedis = _redisContext.Database;
+            var server = _redisContext.Database.Multiplexer.GetServer(_redisContext.Database.Multiplexer.GetEndPoints()[0]);
+            var keys = server.Keys(pattern: "productos:*").ToArray();
+            if (keys.Any())
+            {
+                await dbRedis.KeyDeleteAsync(keys);
+            }
+        }
+        catch
+        {
+            // Falla silenciosa
+        }
+
+        string region = _httpContextAccessor.HttpContext?.Items["Region"]?.ToString() ?? "Local";
+        return MapearA_Dto(producto, region, 0, 0);
+    }
+
+    public async Task<List<string>> ObtenerCodigosPaisAsync()
+    {
+        var codigosPredeterminados = new List<string> 
+        { 
+            "BO", // Bolivia
+            "PE", // Perú
+            "AR", // Argentina
+            "CL", // Chile
+            "CO", // Colombia
+            "MX", // México
+            "US", // Estados Unidos
+            "ES", // España
+            "BR", // Brasil
+            "UY", // Uruguay
+            "PY", // Paraguay
+            "EC", // Ecuador
+            "VE"  // Venezuela
+        };
+        
+        return await Task.FromResult(codigosPredeterminados);
+    }
+
     private ProductoResponseDto MapearA_Dto(Producto p, string region, double estrellas, int cantidadReviews)
     {
         double precioAplicado = p.PrecioBase;

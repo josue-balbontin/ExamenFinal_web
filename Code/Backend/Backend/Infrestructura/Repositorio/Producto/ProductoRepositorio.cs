@@ -93,4 +93,27 @@ public class ProductoRepositorio : IProductoRepositorio
             .OrderByDescending(p => p.FechaCreacion)
             .ToListAsync();
     }
+
+    public async Task<Producto> AgregarProductoAsync(Producto producto)
+    {
+        _context.Productos.Add(producto);
+        await _context.SaveChangesAsync();
+        return producto;
+    }
+
+    public async Task ActualizarProductoAsync(Producto producto)
+    {
+        _context.Productos.Update(producto);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<string>> ObtenerCodigosPaisDistintosAsync()
+    {
+        return await _context.PreciosGeolocalizados
+            .Where(pg => !pg.EstadoEliminado)
+            .Select(pg => pg.CodigoPais)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
+    }
 }
