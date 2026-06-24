@@ -83,7 +83,8 @@ export async function forgotPasswordService(
     );
   }
 
-  return (responseData as { token?: string })?.token || null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (responseData as any)?.token || null;
 }
 
 export async function resetPasswordService(

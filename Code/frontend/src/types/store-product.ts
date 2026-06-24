@@ -9,4 +9,7 @@ export interface StoreProduct {
   status: StockStatus;
   idCategoria?: number;
   imageUrl?: string;
+  flashSalePercentage?: number;
+  flashSaleStartDate?: string;
+  flashSaleEndDate?: string;
 }

@@ -117,6 +117,46 @@ export class ProductFormModalComponent {
         value: this.product?.imageUrl ?? '',
         full: true,
       },
+      {
+        id: 'cp-flash-discount',
+        name: 'flashDiscount',
+        label: 'Descuento Flash (%) - Opcional',
+        type: 'number',
+        placeholder: 'Ej. 20',
+        value: this.product?.flashSalePercentage
+          ? String(this.product.flashSalePercentage)
+          : '',
+        step: '1',
+        full: true,
+      },
+      {
+        id: 'cp-flash-start',
+        name: 'flashStart',
+        label: 'Inicio Oferta Flash',
+        type: 'datetime-local',
+        placeholder: '',
+        value: this.product?.flashSaleStartDate
+          ? (() => {
+              const d = new Date(this.product.flashSaleStartDate);
+              d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+              return d.toISOString().slice(0, 16);
+            })()
+          : '',
+      },
+      {
+        id: 'cp-flash-end',
+        name: 'flashEnd',
+        label: 'Fin Oferta Flash',
+        type: 'datetime-local',
+        placeholder: '',
+        value: this.product?.flashSaleEndDate
+          ? (() => {
+              const d = new Date(this.product.flashSaleEndDate);
+              d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+              return d.toISOString().slice(0, 16);
+            })()
+          : '',
+      },
     ];
 
     const productGrid = document.createElement('div');
@@ -402,10 +442,12 @@ export class ProductFormModalComponent {
     };
 
     try {
+      let finalProductId = this.product ? Number(this.product.id) : 0;
+
       if (this.product) {
         // Edit
         const { error } = await api.PUT('/Producto/{id}', {
-          params: { path: { id: Number(this.product.id) } },
+          params: { path: { id: finalProductId } },
           body: payload,
         });
         if (error)
@@ -415,7 +457,7 @@ export class ProductFormModalComponent {
           );
       } else {
         // Create
-        const { error } = await api.POST('/Producto', {
+        const { data, error } = await api.POST('/Producto', {
           body: payload,
         });
         if (error)
@@ -423,6 +465,49 @@ export class ProductFormModalComponent {
             (error as { mensaje?: string }).mensaje ||
               'Error al crear el producto'
           );
+        if (data && typeof data === 'object' && 'idProducto' in data) {
+          finalProductId = Number(data.idProducto);
+        }
+      }
+
+      // Flash Sale Logic
+      const flashDiscountInput =
+        form.querySelector<HTMLInputElement>('#cp-flash-discount');
+      const flashStartInput =
+        form.querySelector<HTMLInputElement>('#cp-flash-start');
+      const flashEndInput =
+        form.querySelector<HTMLInputElement>('#cp-flash-end');
+
+      if (
+        flashDiscountInput?.value &&
+        flashStartInput?.value &&
+        flashEndInput?.value &&
+        finalProductId > 0
+      ) {
+        const flashPayload = {
+          porcentajeDescuento: Number(flashDiscountInput.value),
+          fechaInicio: new Date(flashStartInput.value).toISOString(),
+          fechaFin: new Date(flashEndInput.value).toISOString(),
+        };
+
+        const { error: flashError } = await api.POST(
+          '/Producto/{id}/oferta-flash',
+          {
+            params: { path: { id: finalProductId } },
+            body: flashPayload,
+          }
+        );
+
+        if (flashError) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const errObj = flashError as any;
+          if (errObj.errors && errObj.errors.FechaFin) {
+            throw new Error(errObj.errors.FechaFin.join(' '));
+          }
+          throw new Error(
+            errObj.mensaje || 'Error al configurar la Oferta Flash'
+          );
+        }
       }
 
       this.close();

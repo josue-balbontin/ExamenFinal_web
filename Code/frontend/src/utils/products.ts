@@ -32,11 +32,15 @@ export async function fetchProducts(
       category:
         (p.nombreCategoria as string) || (p.categoria as string) || 'Todo',
       seller: (p.nombreVendedor as string) || 'Vendedor',
-      price: (p.precioBase as number) || 0,
+      price: (p.precioAplicado as number) || (p.precioBase as number) || 0,
       originalPrice: (p.precioBase as number) || 0,
       rating: (p.estrellas as number) || 0,
       reviewCount: (p.cantidadReviews as number) || 0,
       imageUrl: (p.urlImagen as string) || undefined,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      flashSaleActive: (p.ofertaFlash as any)?.estaActiva || false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      flashSaleEndDate: (p.ofertaFlash as any)?.fechaFin || undefined,
     }));
 
     // Filtramos localmente por categoría (ya que no estamos mandando List<int> al backend aún) y precio
