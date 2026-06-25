@@ -23,22 +23,21 @@ public class IpRegionMiddleware
         string region = "Local";
         string ipAddress = string.Empty;
 
-        // Intentar obtener IP de cabeceras de proxy (ideal para pruebas y balanceadores)
         if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
         {
             ipAddress = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim() ?? string.Empty;
         }
 
-        // Si no hay proxy, tomar la IP remota real
+
         if (string.IsNullOrEmpty(ipAddress) && context.Connection.RemoteIpAddress != null)
         {
             ipAddress = context.Connection.RemoteIpAddress.ToString();
         }
 
-        // Si es localhost o IP privada básica, asignar Local
+
         if (ipAddress == "127.0.0.1" || ipAddress == "::1" || string.IsNullOrEmpty(ipAddress))
         {
-            // Para pruebas manuales con Swagger puedes seguir usando X-Region
+  
             if (context.Request.Headers.TryGetValue("X-Region", out var regionHeader))
             {
                 region = regionHeader.ToString();
@@ -50,7 +49,7 @@ public class IpRegionMiddleware
         }
         else
         {
-            // Si es una IP pública, buscar en caché o consultar la API
+ 
             if (_ipCache.TryGetValue(ipAddress, out var cachedRegion))
             {
                 region = cachedRegion;
@@ -76,7 +75,7 @@ public class IpRegionMiddleware
                 }
                 catch
                 {
-                    // Fallback en caso de error de red o timeout
+
                     region = "Local";
                 }
             }

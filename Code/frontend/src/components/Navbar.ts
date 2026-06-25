@@ -124,42 +124,14 @@ export class NavbarComponent {
       }
     });
 
-    // ── Region selector ──
-    const regionSelector = document.createElement('select');
-    regionSelector.className = 'navbar__region-selector';
-    regionSelector.setAttribute('aria-label', 'Seleccionar región');
-    const regions = [
-      { code: '', label: 'Local (Auto)' },
-      { code: 'BO', label: 'Bolivia (BO)' },
-      { code: 'PE', label: 'Perú (PE)' },
-      { code: 'AR', label: 'Argentina (AR)' },
-      { code: 'CL', label: 'Chile (CL)' },
-      { code: 'US', label: 'EE.UU. (US)' },
-    ];
+    const regionDisplay = document.createElement('div');
+    regionDisplay.className = 'navbar__region-display';
+    regionDisplay.setAttribute('title', 'Ubicación actual');
+    const savedRegion = this.store.getState().region || 'Auto';
+    regionDisplay.innerHTML = `<span>${savedRegion}</span>`;
 
-    const savedRegion = localStorage.getItem('region') || '';
-    regions.forEach((r) => {
-      const opt = document.createElement('option');
-      opt.value = r.code;
-      opt.textContent = r.label;
-      if (r.code === savedRegion) opt.selected = true;
-      regionSelector.appendChild(opt);
-    });
 
-    regionSelector.addEventListener('change', (e) => {
-      const val = (e.target as HTMLSelectElement).value;
-      if (val) {
-        localStorage.setItem('region', val);
-      } else {
-        localStorage.removeItem('region');
-      }
-      this.store.setState({ region: val || 'Local' } as Partial<AppState>);
-      // En lugar de recargar la página (lo que causa pantalla blanca/404 en Vite build),
-      // re-navegamos a la ruta actual para forzar re-render sin perder estado de autenticación.
-      this.router.navigate(window.location.pathname as Route);
-    });
-
-    actions.appendChild(regionSelector);
+    actions.appendChild(regionDisplay);
     actions.appendChild(bellBtn);
     actions.appendChild(cartBtn);
     actions.appendChild(userBtn);

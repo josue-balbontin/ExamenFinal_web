@@ -61,6 +61,7 @@ export async function fetchProductDetail(id: string): Promise<ProductDetail> {
     description: p.descripcion || '',
     reviews,
     distribution: dist,
+    imageUrl: p.urlImagen || undefined
   };
 }
 
@@ -92,7 +93,7 @@ export async function submitReview(
   if (error) {
     throw new Error(
       ((error as Record<string, unknown>)?.mensaje as string) ||
-        'No se pudo enviar la reseña'
+      'No se pudo enviar la reseña'
     );
   }
 
