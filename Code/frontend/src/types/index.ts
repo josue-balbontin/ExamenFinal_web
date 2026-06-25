@@ -97,6 +97,7 @@ export interface AppState {
   searchQuery: string;
   selectedCategory: Category;
   maxPrice: number;
+  region: string;
 }
 
 export type Listener<T> = (state: T) => void;

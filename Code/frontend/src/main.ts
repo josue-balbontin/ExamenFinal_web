@@ -13,6 +13,7 @@ import { fetchCart } from './utils/cartServices.js';
 import { createForgotPasswordPage } from './pages/ForgotPasswordPage.js';
 import { createResetPasswordPage } from './pages/ResetPasswordPage.js';
 import { restoreSession } from './utils/auth.js';
+import { detectRegion } from './utils/region.js';
 
 const restoredUser = restoreSession();
 
@@ -31,6 +32,7 @@ const initialState: AppState = {
   searchQuery: '',
   selectedCategory: 'Todo',
   maxPrice: MAX_PRICE_DEFAULT,
+  region: localStorage.getItem('region') || '',
 };
 
 const store = new Store<AppState>(initialState);
@@ -64,5 +66,7 @@ if (store.getState().auth.isAuthenticated) {
     console.error('Error fetching cart on init:', err)
   );
 }
+
+detectRegion(store);
 
 router.init();

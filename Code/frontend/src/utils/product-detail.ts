@@ -61,6 +61,7 @@ export async function fetchProductDetail(id: string): Promise<ProductDetail> {
     description: p.descripcion || '',
     reviews,
     distribution: dist,
+    imageUrl: p.urlImagen || undefined,
   };
 }
 
