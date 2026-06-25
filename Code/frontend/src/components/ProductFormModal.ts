@@ -360,7 +360,6 @@ export class ProductFormModalComponent {
           }
         }
       );
-      // Try to preselect if editing
       if (this.product?.idCategoria) {
         select.value = String(this.product.idCategoria);
       } else {
@@ -372,7 +371,11 @@ export class ProductFormModalComponent {
     }
   }
 
+  private isSubmitting = false;
+
   private async handleSubmit(form: HTMLFormElement): Promise<void> {
+    if (this.isSubmitting) return;
+
     const serverError =
       this.root.querySelector<HTMLElement>('#cp-server-error');
     if (serverError) {
@@ -380,7 +383,6 @@ export class ProductFormModalComponent {
       serverError.style.display = 'none';
     }
 
-    // Clear previous errors
     form
       .querySelectorAll<HTMLElement>('.edit-profile-modal__field-error')
       .forEach((el) => {
@@ -392,7 +394,6 @@ export class ProductFormModalComponent {
         el.classList.remove('edit-profile-modal__input--error');
       });
 
-    // Validate required fields (inputs, selects, textareas)
     let valid = true;
     form
       .querySelectorAll<
@@ -422,6 +423,8 @@ export class ProductFormModalComponent {
       saveBtn.textContent = 'Guardando…';
     }
 
+    this.isSubmitting = true;
+
     const payload = {
       nombre: (
         form.querySelector<HTMLInputElement>('#cp-name')?.value || ''
@@ -445,7 +448,6 @@ export class ProductFormModalComponent {
       let finalProductId = this.product ? Number(this.product.id) : 0;
 
       if (this.product) {
-        // Edit
         const { error } = await api.PUT('/Producto/{id}', {
           params: { path: { id: finalProductId } },
           body: payload,
@@ -456,7 +458,6 @@ export class ProductFormModalComponent {
               'Error al actualizar el producto'
           );
       } else {
-        // Create
         const { data, error } = await api.POST('/Producto', {
           body: payload,
         });
@@ -510,18 +511,19 @@ export class ProductFormModalComponent {
         }
       }
 
+      if (saveBtn) {
+        saveBtn.textContent = '¡Éxito!';
+      }
+
       this.close();
 
       showStatusModal({
         type: 'success',
-        title: this.product
-          ? 'Producto actualizado'
-          : 'Producto creado exitosamente',
-        autoCloseMs: 3000,
-        onClose: () => {
-          window.location.reload();
-        },
-      });
+        title: this.product ? 'Producto actualizado' : '¡Producto creado!',
+        message: this.product
+          ? 'Los cambios se han guardado exitosamente.'
+          : 'Tu producto se ha creado y publicado exitosamente en la tienda.',
+      }).mount();
     } catch (err: unknown) {
       if (serverError) {
         serverError.textContent =
@@ -530,8 +532,10 @@ export class ProductFormModalComponent {
       }
       if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.textContent = originalText;
+        saveBtn.textContent = originalText || 'Guardar';
       }
+    } finally {
+      this.isSubmitting = false;
     }
   }
 

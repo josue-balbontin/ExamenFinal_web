@@ -137,12 +137,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ onClose, pro
         }
       }
       
-      handleClose();
       showStatusModal({
         type: 'success',
         title: product ? 'Producto actualizado' : 'Producto creado exitosamente',
         autoCloseMs: 3000,
-        onClose: () => window.location.reload()
+        onClose: () => {
+          handleClose();
+          window.location.reload();
+        }
       });
       
     } catch (err: any) {
